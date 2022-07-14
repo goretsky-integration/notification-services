@@ -8,6 +8,7 @@ __all__ = (
     'StopSaleBySalesChannels',
     'StopSaleByIngredients',
     'StopSaleByProduct',
+    'OrderByUUID',
 )
 
 
@@ -39,3 +40,13 @@ class StopSaleByProduct(StopSale):
 
 class StopSaleBySalesChannels(StopSale):
     sales_channel_name: str
+
+
+class OrderByUUID(BaseModel):
+    unit_name: str
+    created_at: datetime
+    receipt_printed_at: datetime | None
+    number: str
+    type: str
+    price: int
+    uuid: uuid.UUID
