@@ -52,12 +52,12 @@ get_stop_sales_by_ingredients = StopSalesByToken(
 )
 
 get_stop_sales_by_products = StopSalesByToken(
-    url=f'{app_settings.api_url}/v1/stop-sales/products',
+    url=f'{app_settings.api_url}/v2/stop-sales/products',
     stop_sale_model=models.StopSaleByProduct,
 )
 
 get_stop_sales_by_channels = StopSalesByToken(
-    url=f'{app_settings.api_url}/v1/stop-sales/channels',
+    url=f'{app_settings.api_url}/v2/stop-sales/channels',
     stop_sale_model=models.StopSaleBySalesChannels,
 )
 
