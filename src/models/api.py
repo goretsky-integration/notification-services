@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 __all__ = (
     'Unit',
@@ -9,6 +9,8 @@ __all__ = (
     'StopSaleByIngredients',
     'StopSaleByProduct',
     'OrderByUUID',
+    'CheatedOrders',
+    'CheatedOrder',
 )
 
 
@@ -50,3 +52,25 @@ class OrderByUUID(BaseModel):
     type: str
     price: int
     uuid: uuid.UUID
+
+
+class CheatedOrder(BaseModel):
+    created_at: datetime
+    number: str
+
+
+class CheatedOrders(BaseModel):
+    unit_name: str
+    phone_number: str
+    orders: list[CheatedOrder]
+
+    @property
+    def orders_count(self) -> int:
+        return len(self.orders)
+
+    @validator('phone_number')
+    def humanize_phone_number(cls, value: str) -> str:
+        value = value.removesuffix('.0')
+        if len(value) != 11:
+            return value
+        return f'+{value[0]} {value[1:4]} {value[4:7]}-{value[7:9]}-{value[9:11]}'
