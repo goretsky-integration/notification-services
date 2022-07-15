@@ -29,6 +29,15 @@ def get_canceled_orders(cookies: dict) -> list[models.OrderByUUID]:
     return parse_obj_as(list[models.OrderByUUID], response.json())
 
 
+def get_cheated_orders(cookies: dict, unit_ids_and_names) -> list[models.CheatedOrders]:
+    url = f'{app_settings.api_url}/v1/cheated-orders'
+    body = {'cookies': cookies, 'units': unit_ids_and_names, 'date': '2022-07-14'}
+    response = httpx.post(url, json=body, timeout=30)
+    if not response.is_success:
+        raise exceptions.DodoAPIError
+    return parse_obj_as(list[models.CheatedOrders], response.json())
+
+
 class StopSalesByToken:
 
     def __init__(self, url: str, stop_sale_model: Type[SSM]):
