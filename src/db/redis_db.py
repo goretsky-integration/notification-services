@@ -11,6 +11,7 @@ __all__ = (
     'close_redis_db_connection',
     'get_token',
     'get_cookies',
+    'CheatedPhoneNumbersCountStorage',
     'CanceledOrderUUIDsStorage',
 )
 
@@ -21,6 +22,26 @@ try:
 except redis.exceptions.ConnectionError:
     logger.critical('Could not connect to redis')
     exit(1)
+
+
+class CheatedPhoneNumbersCountStorage:
+    storage_name = 'cheated_phone_numbers_count'
+
+    def __init__(self, name: str):
+        self._name = name
+
+    @classmethod
+    def clear(cls):
+        return connection.delete(cls.storage_name)
+
+    def set_count(self, phone_number: str, count: int) -> int:
+        return connection.hset(self.storage_name, f'{self._name}@{phone_number}', count)
+
+    def get_count(self, phone_number: str) -> int:
+        count = connection.hget(self.storage_name, f'{self._name}@{phone_number}')
+        if count is None:
+            return 0
+        return int(count)
 
 
 class CanceledOrderUUIDsStorage:
