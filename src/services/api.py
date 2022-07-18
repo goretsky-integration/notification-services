@@ -1,6 +1,6 @@
 import sys
 import uuid
-from typing import Iterable, TypeVar, Type
+from typing import Iterable, TypeVar, Type, Generic
 
 import httpx
 from pydantic import parse_obj_as
@@ -38,7 +38,7 @@ def get_cheated_orders(cookies: dict, unit_ids_and_names) -> list[models.Cheated
     return parse_obj_as(list[models.CheatedOrders], response.json())
 
 
-class StopSalesByToken:
+class StopSalesByToken(Generic[SSM]):
 
     def __init__(self, url: str, stop_sale_model: Type[SSM]):
         self._url = url
@@ -55,17 +55,17 @@ class StopSalesByToken:
         return parse_obj_as(list[self._stop_sale_model], response.json())
 
 
-get_stop_sales_by_ingredients = StopSalesByToken(
+get_stop_sales_by_ingredients: StopSalesByToken[models.StopSaleByIngredients] = StopSalesByToken(
     url=f'{app_settings.api_url}/v2/stop-sales/ingredients',
     stop_sale_model=models.StopSaleByIngredients,
 )
 
-get_stop_sales_by_products = StopSalesByToken(
+get_stop_sales_by_products: StopSalesByToken[models.StopSaleByProduct] = StopSalesByToken(
     url=f'{app_settings.api_url}/v2/stop-sales/products',
     stop_sale_model=models.StopSaleByProduct,
 )
 
-get_stop_sales_by_channels = StopSalesByToken(
+get_stop_sales_by_channels: StopSalesByToken[models.StopSaleBySalesChannels] = StopSalesByToken(
     url=f'{app_settings.api_url}/v2/stop-sales/channels',
     stop_sale_model=models.StopSaleBySalesChannels,
 )
