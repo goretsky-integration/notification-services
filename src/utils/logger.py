@@ -1,33 +1,14 @@
-import logging.config
+from loguru import logger
 
-from config import LOGS_FILE_PATH
+from config import LOGS_FILE_PATH, app_settings
 
 __all__ = (
     'logger',
 )
 
-log_config = {
-    "version": 1,
-    "root": {
-        "handlers": ["console"],
-        "level": "DEBUG"
-    },
-    "handlers": {
-        "console": {
-            "formatter": "std_out",
-            "class": "logging.StreamHandler",
-            "level": "DEBUG"
-        }
-    },
-    "formatters": {
-        "std_out": {
-            "format": "%(asctime)s : %(levelname)s : %(module)s : %(funcName)s : %(lineno)d)\nLog : %(message)s",
-            "datefmt": "%d-%m-%Y %I:%M:%S"
-        }
-    },
-}
-
-logging.config.dictConfig(log_config)
-logger = logging.getLogger()
-handler = logging.FileHandler(LOGS_FILE_PATH)
-logger.addHandler(handler)
+log_level = 'DEBUG' if app_settings.debug else 'INFO'
+logger.add(
+    sink=LOGS_FILE_PATH,
+    level=log_level,
+    retention='3 days',
+)
