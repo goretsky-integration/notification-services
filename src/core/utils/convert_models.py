@@ -3,7 +3,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Iterable
 
-import models
+from core import models
 
 
 @dataclass(slots=True, frozen=True)

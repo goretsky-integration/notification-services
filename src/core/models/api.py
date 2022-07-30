@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, validator
 
 __all__ = (
     'Unit',
+    'StopSale',
     'StopSaleBySalesChannels',
     'StopSaleByIngredients',
     'StopSaleByProduct',
@@ -15,7 +16,7 @@ __all__ = (
 
 
 class Unit(BaseModel):
-    id: int = Field(..., alias='_id')
+    id: int
     name: str
     uuid: uuid.UUID
     account_name: str
@@ -23,7 +24,7 @@ class Unit(BaseModel):
 
 
 class StopSale(BaseModel):
-    unit_id: uuid.UUID
+    unit_uuid: uuid.UUID = Field(alias='unit_id')
     unit_name: str
     reason: str
     started_at: datetime

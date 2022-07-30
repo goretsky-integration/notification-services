@@ -2,16 +2,16 @@ import json
 
 import pika
 
-import models
-from config import app_settings
-from utils import logger
+from core import models
+from config import get_app_settings
+from core.utils import logger
 
 __all__ = (
     'add_notification_to_queue',
     'close_rabbitmq_connection',
 )
 
-connection = pika.BlockingConnection(pika.URLParameters(app_settings.rabbitmq_url))
+connection = pika.BlockingConnection(pika.URLParameters(get_app_settings().rabbitmq_url))
 channel = connection.channel()
 channel.queue_declare(queue='telegram-notifications')
 

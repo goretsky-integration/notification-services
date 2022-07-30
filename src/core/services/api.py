@@ -5,10 +5,10 @@ from typing import Iterable, TypeVar, Type, Generic
 import httpx
 from pydantic import parse_obj_as
 
-import models
+from core import models
 from config import app_settings
-from utils import exceptions
-from utils.logger import logger
+from core.utils import exceptions
+from core.utils.logger import logger
 
 SSM = TypeVar('SSM')
 
