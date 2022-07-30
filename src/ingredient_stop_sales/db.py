@@ -1,9 +1,8 @@
-import pathlib
 import sqlite3
 
 import config
 
-DATABASE_PATH = pathlib.Path.joinpath(config.ROOT_PATH / 'local_storage', 'ingredient_stops.db')
+DATABASE_PATH = config.LOCAL_STORAGE_PATH / 'ingredient_stops.db'
 
 
 def init_db():
