@@ -10,7 +10,7 @@ __all__ = (
 class BaseHTTPAPIRepository:
 
     def __init__(self, base_url: str):
-        self._client = httpx.Client(base_url=base_url, timeout=60)
+        self._client = httpx.Client(base_url=base_url, timeout=120)
 
     def close(self):
         if not self._client.is_closed:

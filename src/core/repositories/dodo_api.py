@@ -5,12 +5,11 @@ from pydantic import parse_obj_as
 
 from core import models
 from core.repositories.base import BaseHTTPAPIRepository
+from core.utils import exceptions
 
 __all__ = (
     'DodoAPIRepository',
 )
-
-from core.utils import exceptions
 
 
 class DodoAPIRepository(BaseHTTPAPIRepository):
@@ -25,3 +24,19 @@ class DodoAPIRepository(BaseHTTPAPIRepository):
         if response.is_server_error:
             raise exceptions.DodoAPIError
         return parse_obj_as(list[models.StopSaleByIngredients], response.json())
+
+    def get_stocks_balance(
+            self,
+            cookies: dict[str, str],
+            unit_ids: Iterable[int],
+            days_left_threshold: int,
+    ) -> models.StockBalanceStatistics:
+        body = {
+            'cookies': cookies,
+            'unit_ids': unit_ids,
+            'days_left_threshold': days_left_threshold,
+        }
+        response = self._client.post('/stocks/', json=body)
+        if response.is_server_error:
+            raise exceptions.DodoAPIError
+        return models.StockBalanceStatistics.parse_obj(response.json())

@@ -12,6 +12,8 @@ __all__ = (
     'OrderByUUID',
     'CheatedOrders',
     'CheatedOrder',
+    'StockBalance',
+    'StockBalanceStatistics',
 )
 
 
@@ -75,3 +77,16 @@ class CheatedOrders(BaseModel):
         if len(value) != 11:
             return value
         return f'+{value[0]} {value[1:4]} {value[4:7]}-{value[7:9]}-{value[9:11]}'
+
+
+class StockBalance(BaseModel):
+    unit_id: int
+    ingredient_name: str
+    days_left: int
+    stocks_count: int | float
+    stocks_unit: str
+
+
+class StockBalanceStatistics(BaseModel):
+    error_unit_ids: list[int]
+    units: list[StockBalance]
