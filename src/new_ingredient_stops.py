@@ -10,7 +10,8 @@ def main():
         ingredients = [models.IngredientStop(name=stop_sale.ingredient_name, reason=stop_sale.reason,
                                              started_at=stop_sale.started_at)
                        for stop_sale in stop_sales
-                       if stop_sale.ingredient_name not in ingredient_names]
+                       if (stop_sale.ingredient_name not in ingredient_names)
+                       and (stop_sale.staff_name_who_resumed is None)]
         if not ingredients:
             continue
         payload = models.StopSalesByOtherIngredients(ingredients=ingredients, unit_name=unit_name)
