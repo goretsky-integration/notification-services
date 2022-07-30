@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 __all__ = (
     'get_app_settings',
+    'get_stocks_balance_settings',
     'ROOT_PATH',
     'LOGS_FILE_PATH',
     'LOCAL_STORAGE_PATH'
@@ -25,6 +26,15 @@ class AppSettings(BaseSettings):
     rabbitmq_url: str = Field(..., env='RABBITMQ_URL')
 
 
+class StocksBalanceSettings(BaseSettings):
+    days_left_threshold: int = Field(..., env='STOCKS_BALANCE_DAYS_LEFT_THRESHOLD')
+
+
 @lru_cache
 def get_app_settings() -> AppSettings:
     return AppSettings()
+
+
+@lru_cache
+def get_stocks_balance_settings() -> StocksBalanceSettings:
+    return StocksBalanceSettings()
