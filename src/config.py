@@ -1,10 +1,11 @@
 import pathlib
+from functools import lru_cache
 
 from pydantic import BaseSettings, Field
 from dotenv import load_dotenv
 
 __all__ = (
-    'app_settings',
+    'get_app_settings',
     'ROOT_PATH',
     'LOGS_FILE_PATH',
     'LOCAL_STORAGE_PATH'
@@ -18,11 +19,12 @@ LOCAL_STORAGE_PATH = ROOT_PATH / 'local_storage'
 
 
 class AppSettings(BaseSettings):
-    mongo_url: str = Field(..., env='MONGO_DB_URL')
-    redis_url: str = Field(..., env='REDIS_DB_URL')
     debug: bool = Field(..., env='DEBUG')
     api_url: str = Field(..., env='API_URL')
+    db_api_url: str = Field(..., env='DB_API_URL')
     rabbitmq_url: str = Field(..., env='RABBITMQ_URL')
 
 
-app_settings = AppSettings()
+@lru_cache
+def get_app_settings() -> AppSettings:
+    return AppSettings()
