@@ -1,5 +1,5 @@
-import db
 from core import models, rabbitmq
+from ingredient_stop_sales import db
 from ingredient_stop_sales.stop_sales import get_stop_sales
 
 
