@@ -40,3 +40,14 @@ class DodoAPIRepository(BaseHTTPAPIRepository):
         if response.is_server_error:
             raise exceptions.DodoAPIError
         return models.StockBalanceStatistics.parse_obj(response.json())
+
+    def get_stop_sales_by_channels(
+            self,
+            token: str,
+            unit_uuids: Iterable[UUID],
+    ) -> list[models.StopSaleBySalesChannels]:
+        params = {'token': token, 'unit_uuids': unit_uuids}
+        response = self._client.get('/v2/stop-sales/channels', params=params)
+        if response.is_server_error:
+            raise exceptions.DodoAPIError
+        return parse_obj_as(list[models.StopSaleBySalesChannels], response.json())
