@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from canceled_orders.rabbitmq import add_notification_to_queue
+from rabbitmq import add_notification_to_queue
 
 
 def to_payload(stop_sale: StopSaleBySalesChannels) -> dict:
