@@ -44,7 +44,6 @@ async def main():
     for stocks_balance_statistics in all_stocks_balance_statistics:
         for unit_id, stocks_balance in group_stocks_balance_by_unit_id(stocks_balance_statistics.units).items():
             unit_name = unit_ids_to_names[unit_id]
-            print(stocks_balance)
             add_notification_to_queue({
                 'type': 'STOCKS_BALANCE',
                 'unit_id': unit_id,
