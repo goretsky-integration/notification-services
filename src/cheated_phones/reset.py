@@ -1,8 +1,9 @@
-import db
+from storage import CheatedPhonesStorage
 
 
 def main():
-    db.CheatedPhoneNumbersCountStorage.clear()
+    with CheatedPhonesStorage() as storage:
+        storage.clear()
 
 
 if __name__ == '__main__':
