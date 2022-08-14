@@ -39,7 +39,7 @@ async def main():
         for cheated_order in cheated_orders:
             if cheated_order.phone_number in FILTER_NUMBERS:
                 continue
-            if storage.get_count(cheated_order.phone_number) <= len(cheated_order.orders):
+            if storage.get_count(cheated_order.phone_number) >= len(cheated_order.orders):
                 continue
             storage.set_count(cheated_order.phone_number, len(cheated_order.orders))
             add_notification_to_queue({
