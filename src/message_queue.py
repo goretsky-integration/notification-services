@@ -4,6 +4,8 @@ from typing import TypedDict
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 
+from settings import get_app_settings
+
 __all__ = (
     'get_message_queue_channel',
     'send_json_message',
@@ -17,7 +19,7 @@ class Message(TypedDict):
 
 
 def get_message_queue_channel() -> BlockingChannel:
-    params = pika.ConnectionParameters(port=5672)
+    params = pika.URLParameters(get_app_settings().rabbitmq_url)
     with pika.BlockingConnection(params) as connection:
         channel = connection.channel()
         channel.queue_declare('telegram-notifications')
