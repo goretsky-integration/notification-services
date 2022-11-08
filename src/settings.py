@@ -1,12 +1,15 @@
 import pathlib
 from functools import lru_cache
 
+from dotenv import load_dotenv
 from pydantic import BaseSettings, Field
 
 __all__ = (
     'get_app_settings',
     'ROOT_PATH',
 )
+
+load_dotenv()
 
 ROOT_PATH = pathlib.Path(__file__).parent.parent
 
