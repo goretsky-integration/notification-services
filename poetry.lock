@@ -58,7 +58,7 @@ toml = ["tomli"]
 
 [[package]]
 name = "dodo-lib-usbtypec1"
-version = "1.3.1"
+version = "1.4.0"
 description = "Wrapper on dodo api and dodo database"
 category = "main"
 optional = false
@@ -374,8 +374,8 @@ coverage = [
     {file = "coverage-6.5.0.tar.gz", hash = "sha256:f642e90754ee3e06b0e7e51bce3379590e76b7f76b708e1a71ff043f87025c84"},
 ]
 dodo-lib-usbtypec1 = [
-    {file = "dodo_lib_usbtypec1-1.3.1-py3-none-any.whl", hash = "sha256:dc18a5c3bdad6def69e75c170c8d29b6f7292c520d7aad7d9d837e876a2e0e66"},
-    {file = "dodo_lib_usbtypec1-1.3.1.tar.gz", hash = "sha256:061efcb823781a8e89d5459c679bfad71d64e353c4e48e0a1c1466ec8374ce7b"},
+    {file = "dodo_lib_usbtypec1-1.4.0-py3-none-any.whl", hash = "sha256:e9854625641eeb88322abeb5789aa0bb0f8e3136a239f9608733b89f02f1176e"},
+    {file = "dodo_lib_usbtypec1-1.4.0.tar.gz", hash = "sha256:16164842fe8b34be468ee9a0441c95c831f57a3f6c9d6bc68e370416a4db2a43"},
 ]
 exceptiongroup = [
     {file = "exceptiongroup-1.0.1-py3-none-any.whl", hash = "sha256:4d6c0aa6dd825810941c792f53d7b8d71da26f5e5f84f20f9508e8f2d33b140a"},
