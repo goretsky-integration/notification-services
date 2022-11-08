@@ -1,4 +1,4 @@
-from storage import UUIDStorage
+from canceled_orders_storage import UUIDStorage
 
 
 def main():

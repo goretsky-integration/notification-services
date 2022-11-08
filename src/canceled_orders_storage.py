@@ -3,12 +3,14 @@ import pathlib
 
 from uuid import UUID
 
+from settings import ROOT_PATH
+
 __all__ = (
     'UUIDStorage',
 )
 
 STORAGE_FILE_PATH = pathlib.Path.joinpath(
-    pathlib.Path(__file__).parent.parent.parent,
+    ROOT_PATH,
     'local_storage',
     'canceled_order_uuids.json',
 )
