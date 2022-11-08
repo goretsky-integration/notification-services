@@ -1,3 +1,4 @@
+import contextlib
 import json
 from typing import TypedDict
 
@@ -18,6 +19,7 @@ class Message(TypedDict):
     payload: dict | list
 
 
+@contextlib.contextmanager
 def get_message_queue_channel() -> BlockingChannel:
     params = pika.URLParameters(get_app_settings().rabbitmq_url)
     with pika.BlockingConnection(params) as connection:
