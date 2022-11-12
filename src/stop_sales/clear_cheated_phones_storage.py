@@ -1,4 +1,4 @@
-from storage import CheatedPhonesStorage
+from cheated_phones_storage import CheatedPhonesStorage
 
 
 def main():
