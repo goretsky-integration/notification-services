@@ -3,7 +3,7 @@ import sqlite3
 
 
 DATABASE_PATH = pathlib.Path.joinpath(
-    pathlib.Path(__file__).parent.parent.parent,
+    pathlib.Path(__file__).parent.parent,
     'local_storage',
     'ingredient_stops.db',
 )

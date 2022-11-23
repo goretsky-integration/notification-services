@@ -1,4 +1,4 @@
-from storage import clear_db
+from new_ingredients_storage import clear_db
 
 
 def main():
