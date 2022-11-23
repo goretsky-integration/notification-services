@@ -11,10 +11,8 @@ from settings import get_app_settings
 async def main():
     app_settings = get_app_settings()
     country_code = 'ru'
-    start = datetime.datetime(2022, 11, 1)
     end = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-    # end = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-    # start = end.replace(hour=0, minute=0, second=0, microsecond=0)
+    start = end.replace(hour=0, minute=0, second=0, microsecond=0)
 
     async with DatabaseClient(app_settings.database_api_base_url) as db_client:
         units = UnitsConverter(await db_client.get_units())
@@ -57,7 +55,7 @@ async def main():
                     'reason': stop_sale.reason,
                 },
             }
-        send_json_message(channel, message_body)
+            send_json_message(channel, message_body)
 
 
 if __name__ == '__main__':
