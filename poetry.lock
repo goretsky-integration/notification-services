@@ -58,7 +58,7 @@ toml = ["tomli"]
 
 [[package]]
 name = "dodo-lib-usbtypec1"
-version = "1.5.1"
+version = "1.5.2"
 description = "Wrapper on dodo api and dodo database"
 category = "main"
 optional = false
@@ -90,7 +90,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "httpcore"
-version = "0.16.1"
+version = "0.16.2"
 description = "A minimal low-level HTTP client."
 category = "main"
 optional = false
@@ -374,8 +374,8 @@ coverage = [
     {file = "coverage-6.5.0.tar.gz", hash = "sha256:f642e90754ee3e06b0e7e51bce3379590e76b7f76b708e1a71ff043f87025c84"},
 ]
 dodo-lib-usbtypec1 = [
-    {file = "dodo_lib_usbtypec1-1.5.1-py3-none-any.whl", hash = "sha256:78f86c5982e5750d90d7532eb2e06f0715e1dec0d3e6ced7dfba0a4021420fb2"},
-    {file = "dodo_lib_usbtypec1-1.5.1.tar.gz", hash = "sha256:02b6270df38bef01e0ec79b57913beb847026f5934d159766383653f565ccac9"},
+    {file = "dodo_lib_usbtypec1-1.5.2-py3-none-any.whl", hash = "sha256:93e7db3383ba915bbebc4b234d5c2eb92e929408393f9e74d395bbf10e4be13a"},
+    {file = "dodo_lib_usbtypec1-1.5.2.tar.gz", hash = "sha256:cad43fc6e5b2884f429515dea83afba0428f40b23bfa50e3a9a0bb72ed62dd8d"},
 ]
 exceptiongroup = [
     {file = "exceptiongroup-1.0.4-py3-none-any.whl", hash = "sha256:542adf9dea4055530d6e1279602fa5cb11dab2395fa650b8674eaec35fc4a828"},
@@ -386,8 +386,8 @@ h11 = [
     {file = "h11-0.14.0.tar.gz", hash = "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d"},
 ]
 httpcore = [
-    {file = "httpcore-0.16.1-py3-none-any.whl", hash = "sha256:8d393db683cc8e35cc6ecb02577c5e1abfedde52b38316d038932a84b4875ecb"},
-    {file = "httpcore-0.16.1.tar.gz", hash = "sha256:3d3143ff5e1656a5740ea2f0c167e8e9d48c5a9bbd7f00ad1f8cff5711b08543"},
+    {file = "httpcore-0.16.2-py3-none-any.whl", hash = "sha256:52c79095197178856724541e845f2db86d5f1527640d9254b5b8f6f6cebfdee6"},
+    {file = "httpcore-0.16.2.tar.gz", hash = "sha256:c35c5176dc82db732acfd90b581a3062c999a72305df30c0fc8fafd8e4aca068"},
 ]
 httpx = [
     {file = "httpx-0.23.1-py3-none-any.whl", hash = "sha256:0b9b1f0ee18b9978d637b0776bfd7f54e2ca278e063e3586d8f01cda89e042a8"},
