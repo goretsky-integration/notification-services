@@ -1,10 +1,6 @@
 [Unit]
 Description=Stop sales by sales channels service
-Wants=StopSalesBySalesChannels.timer
 
 [Service]
 Type=oneshot
 ExecStart=
-
-[Install]
-WantedBy=multi-user.target

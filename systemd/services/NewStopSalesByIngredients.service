@@ -1,10 +1,6 @@
 [Unit]
 Description=New stop sales by ingredients service
-Wants=NewStopSalesByIngredients.timer
 
 [Service]
 Type=oneshot
 ExecStart=
-
-[Install]
-WantedBy=multi-user.target

@@ -10,8 +10,9 @@
 ### Файлы из директории [timers](./timers)
 
 - При необходимости, настроить поле `OnCalendar`.
-- Скопировать в директорию `/etc/systemd/system`
+- Скопировать в директорию `/etc/systemd/system`.
+- Считать конфиги `systemctl daemon-reload`.
 
-После этого нужно включить каждый сервис `systemctl enable *service_name*`.
-
-В конце перезапустить демон `systemctl daemon-reload`.
+После этого нужно включить каждый сервис:
+- `systemctl enable *service_name*`.
+- `systemctl start *service_name*`

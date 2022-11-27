@@ -1,9 +1,7 @@
 [Unit]
 Description=Stop sales by sales channels timer
-Requires=StopSalesBySalesChannels.service
 
 [Timer]
-Unit=StopSalesBySalesChannels.service
 OnCalendar=*:0/10:0
 
 [Install]
