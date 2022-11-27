@@ -1,0 +1,10 @@
+[Unit]
+Description=New stop sales by ingredients service
+Requires=NewStopSalesByIngredients.service
+
+[Timer]
+Unit=NewStopSalesByIngredients.service
+OnCalendar=9..23:0/5:00
+
+[Install]
+WantedBy=timers.target
