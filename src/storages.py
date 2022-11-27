@@ -5,6 +5,7 @@ import uuid
 
 __all__ = (
     'IngredientStopSaleIDsStorage',
+    'CheatedPhonesCountStorage',
 )
 
 
@@ -51,3 +52,26 @@ class IngredientStopSaleIDsStorage(BaseStorage):
 
     def clear(self) -> None:
         self._data = set()
+
+
+class CheatedPhonesCountStorage(BaseStorage):
+
+    def load(self) -> None:
+        if not self._storage_path.exists():
+            self._data = {}
+        else:
+            with open(self._storage_path) as file:
+                self._data: dict[str, int] = json.load(file)
+
+    def save(self) -> None:
+        with open(self._storage_path, 'w') as file:
+            json.dump(self._data, file)
+
+    def set(self, phone_number: str, count: int):
+        self._data[phone_number] = count
+
+    def get(self, phone_number: str) -> int:
+        return self._data.get(phone_number, 0)
+
+    def clear(self):
+        self._data = {}
