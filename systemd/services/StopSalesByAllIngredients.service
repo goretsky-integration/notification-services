@@ -1,0 +1,10 @@
+[Unit]
+Description=Stop sales by all ingredients service
+Wants=StopSalesBySalesAllIngredients.timer
+
+[Service]
+Type=oneshot
+ExecStart=
+
+[Install]
+WantedBy=multi-user.target

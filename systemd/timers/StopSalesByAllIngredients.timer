@@ -1,0 +1,10 @@
+[Unit]
+Description=Stop sales by all ingredients timer
+Requires=StopSalesBySalesAllIngredients.service
+
+[Timer]
+Unit=StopSalesBySalesAllIngredients.service
+OnCalendar=*:0/10:0
+
+[Install]
+WantedBy=timers.target
