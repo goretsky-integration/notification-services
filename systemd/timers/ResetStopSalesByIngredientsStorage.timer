@@ -1,0 +1,8 @@
+[Unit]
+Description=Reset stop sales by ingredients storage timer
+
+[Timer]
+OnCalendar=00:00:00
+
+[Install]
+WantedBy=timers.target
