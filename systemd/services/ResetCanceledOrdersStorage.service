@@ -1,0 +1,6 @@
+[Unit]
+Description=Reset canceled orders storage service
+
+[Service]
+Type=oneshot
+ExecStart=

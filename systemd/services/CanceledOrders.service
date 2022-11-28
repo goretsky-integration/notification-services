@@ -1,0 +1,6 @@
+[Unit]
+Description=Canceled orders service
+
+[Service]
+Type=oneshot
+ExecStart=
