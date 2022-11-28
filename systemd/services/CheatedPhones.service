@@ -1,0 +1,6 @@
+[Unit]
+Description=Cheated phones service
+
+[Service]
+Type=oneshot
+ExecStart=

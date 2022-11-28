@@ -1,0 +1,6 @@
+[Unit]
+Description=Reset cheated phones storage service
+
+[Service]
+Type=oneshot
+ExecStart=

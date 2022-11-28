@@ -1,0 +1,8 @@
+[Unit]
+Description=Reset cheated phones storage timer
+
+[Timer]
+OnCalendar=00:00:00
+
+[Install]
+WantedBy=timers.target
