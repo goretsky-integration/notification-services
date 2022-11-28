@@ -1,0 +1,6 @@
+[Unit]
+Description=Stocks balance service
+
+[Service]
+Type=oneshot
+ExecStart=/root/.cache/pypoetry/virtualenvs/dodo-stop-sales-D5vPjVRT-py3.10/bin/python3.10 /root/dodo-project/dodo__services/src/stocks_balance.py
