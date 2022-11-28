@@ -1,0 +1,6 @@
+[Unit]
+Description=Stop sales by streets service
+
+[Service]
+Type=oneshot
+ExecStart=

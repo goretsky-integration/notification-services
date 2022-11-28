@@ -1,0 +1,6 @@
+[Unit]
+Description=Stop sales by sectors service
+
+[Service]
+Type=oneshot
+ExecStart=

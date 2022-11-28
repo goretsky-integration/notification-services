@@ -1,0 +1,6 @@
+[Unit]
+Description=Stop sales by partial ingredients service
+
+[Service]
+Type=oneshot
+ExecStart=

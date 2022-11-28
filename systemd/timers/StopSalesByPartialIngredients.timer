@@ -1,0 +1,8 @@
+[Unit]
+Description=Stop sales by partial ingredients timer
+
+[Timer]
+OnCalendar=*:0/30:0
+
+[Install]
+WantedBy=timers.target
