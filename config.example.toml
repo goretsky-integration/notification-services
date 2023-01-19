@@ -1,0 +1,7 @@
+[api]
+dodo_api_url = ""
+database_api_url = ""
+auth_api_url = ""
+
+[message_queue]
+rabbitmq_url = ""
