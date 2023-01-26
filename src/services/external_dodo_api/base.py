@@ -1,6 +1,10 @@
-from services.http_client_factories import HTTPClient
+from typing import TypeAlias
+
+import httpx
 
 __all__ = ('APIService',)
+
+HTTPClient: TypeAlias = httpx.Client
 
 
 class APIService:
