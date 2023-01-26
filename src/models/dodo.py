@@ -30,7 +30,7 @@ class StopSaleByStreet(StopSaleV1):
 
 class StopSaleV2(BaseModel):
     id: UUID
-    unit_id: UUID
+    unit_uuid: UUID
     unit_name: str
     reason: str
     started_at: datetime.datetime
