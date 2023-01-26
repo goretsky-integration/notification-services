@@ -1,4 +1,6 @@
 import contextlib
+import datetime
+import json
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
@@ -21,8 +23,9 @@ def get_message_queue_channel(rabbitmq_url: str) -> BlockingChannel:
 
 
 def send_json_message(channel: BlockingChannel, event: MessageQueueEvent):
+    body = event.get_data() | {'created_at': datetime.datetime.utcnow()}
     channel.basic_publish(
         exchange='',
         routing_key='telegram-notifications',
-        body=event.as_bytes(),
+        body=json.dumps(body, default=str).encode('utf-8'),
     )
