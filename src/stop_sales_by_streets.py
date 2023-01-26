@@ -40,16 +40,11 @@ async def main():
         for stop_sale in stop_sales:
             if stop_sale.staff_name_who_resumed is not None:
                 continue
-            message_body = {
-                'unit_id': unit_names_to_unit_ids[stop_sale.unit_name],
-                'type': 'STREET_STOP_SALES',
-                'payload': {
-                    'unit_name': stop_sale.unit_name,
-                    'started_at': stop_sale.started_at,
-                    'street_name': stop_sale.sector,
-                }
-            }
-            send_json_message(channel, message_body)
+            event = StopSaleByStreetEvent(
+                unit_id=units.unit_name_to_id[stop_sale.unit_name],
+                stop_sale=stop_sale,
+            )
+            message_queue.send_json_message(message_queue_channel, event)
 
 
 if __name__ == '__main__':
