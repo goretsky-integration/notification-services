@@ -7,10 +7,10 @@ import models
 from services.external_dodo_api.base import APIService
 from services.period import Period
 
-__all__ = ('DodoAPIService',)
+__all__ = ('DodoAPI',)
 
 
-class DodoAPIService(APIService):
+class DodoAPI(APIService):
     def __get_stop_sales_v1(
             self,
             *,
