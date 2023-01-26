@@ -60,7 +60,7 @@ class CheatedPhoneNumberOrder(BaseModel):
 
 class CommonPhoneNumberOrders(BaseModel):
     unit_name: str
-    orders: tuple[CheatedPhoneNumberOrder]
+    orders: tuple[CheatedPhoneNumberOrder, ...]
     phone_number: str
 
 
