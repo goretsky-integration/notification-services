@@ -1,59 +1,50 @@
-import asyncio
 import pathlib
 
-from dodolib import DatabaseClient, AuthClient, DodoAPIClient, models
-from dodolib.utils.convert_models import UnitsConverter
+import httpx
 
-from message_queue import send_json_message, get_message_queue_channel
-from settings import get_app_settings
-from storages import CheatedPhonesCountStorage
+import models
+from config import load_config
+from message_queue_events import CheatedPhoneNumberEvent
+from services import message_queue
+from services.converters import UnitsConverter
+from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
+from services.storages import PhoneNumbersStorage
 
-FILTER_NUMBERS = {
-    '79680325999.0',
-}
 
+def main():
+    storage_file_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage', 'phone_numbers.db')
+    config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
+    config = load_config(config_file_path)
 
-async def main():
-    app_settings = get_app_settings()
-    storage_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage', 'cheated_phones.json')
+    with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
+        units = DatabaseAPI(database_client).get_units()
+    units = UnitsConverter(units)
 
-    async with DatabaseClient(app_settings.database_api_base_url) as db_client:
-        units = UnitsConverter(await db_client.get_units())
+    cheated_orders: list[models.CommonPhoneNumberOrders] = []
+    with httpx.Client(base_url=config.api.auth_api_base_url) as auth_client:
+        with httpx.Client(base_url=config.api.dodo_api_base_url, timeout=60) as dodo_api_client:
+            auth_api = AuthAPI(auth_client)
+            dodo_api = DodoAPI(dodo_api_client)
+            for account_name, grouped_units in units.grouped_by_account_name.items():
+                account_cookies = auth_api.get_account_cookies(account_name)
+                cheated_orders += dodo_api.get_cheated_orders(
+                    unit_ids_and_names=grouped_units.ids_and_names,
+                    cookies=account_cookies.cookies,
+                    repeated_phone_number_count_threshold=3,
+                )
 
-    async with AuthClient(app_settings.auth_service_base_url) as auth_client:
-        tasks = (auth_client.get_cookies(account_name) for account_name in units.account_names)
-        accounts_cookies = await asyncio.gather(*tasks)
-
-    account_names_to_unit_id_and_name = units.account_names_to_unit_ids_and_names
-    cheated_orders: list[models.CheatedOrders] = []
-    async with DodoAPIClient(app_settings.dodo_api_base_url) as api_client:
-        for account_cookies in accounts_cookies:
-            cheated_orders += await api_client.get_cheated_orders(
-                account_cookies.cookies,
-                account_names_to_unit_id_and_name[account_cookies.account_name],
-                repeated_phones_count_threshold=3,
-            )
-
-    unit_name_to_id = units.names_to_ids
-    with get_message_queue_channel() as message_queue_channel:
-        with CheatedPhonesCountStorage(storage_path) as storage:
+    with PhoneNumbersStorage(storage_file_path) as storage:
+        with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
             for cheated_order in cheated_orders:
-                if cheated_order.phone_number in FILTER_NUMBERS:
+                if len(cheated_order.orders) <= storage.get_phone_number_count(cheated_order.phone_number):
                     continue
-
-                phone_numbers_in_storage_count = storage.get(cheated_order.phone_number)
-                orders_with_same_phone_numbers_count = len(cheated_order.orders)
-                if phone_numbers_in_storage_count >= orders_with_same_phone_numbers_count:
-                    continue
-
-                message_body = {
-                    'unit_id': unit_name_to_id[cheated_order.unit_name],
-                    'type': 'CHEATED_PHONE_NUMBERS',
-                    'payload': cheated_order.dict(),
-                }
-                send_json_message(message_queue_channel, message_body)
-                storage.set(cheated_order.phone_number, orders_with_same_phone_numbers_count)
+                event = CheatedPhoneNumberEvent(
+                    unit_id=units.unit_name_to_id[cheated_order.unit_name],
+                    common_phone_number_orders=cheated_order,
+                )
+                message_queue.send_json_message(message_queue_channel, event)
+                storage.set_phone_numbers_count(cheated_order.phone_number, count=len(cheated_order.orders))
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()

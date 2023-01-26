@@ -1,0 +1,13 @@
+country_code = ""
+
+[api]
+dodo_api_url = ""
+database_api_url = ""
+auth_api_url = ""
+
+[partial_ingredient_stop_sales]
+disallowed_ingredient_names = []
+allowed_ingredient_names = []
+
+[message_queue]
+rabbitmq_url = ""

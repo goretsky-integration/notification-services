@@ -1,56 +1,49 @@
-import asyncio
-import datetime
+import pathlib
 
-from dodolib import DatabaseClient, AuthClient, DodoAPIClient, models
-from dodolib.utils.convert_models import UnitsConverter
+import httpx
 
-from message_queue import get_message_queue_channel, send_json_message
-from settings import get_app_settings
+import models
+from config import load_config
+from services import message_queue
+from services.converters import UnitsConverter
+from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
+from services.period import Period
+from message_queue_events import StopSaleByStreetEvent
 
 
-async def main():
-    app_settings = get_app_settings()
+def main():
+    config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
+    config = load_config(config_file_path)
 
-    ended_at = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-    started_at = ended_at.replace(hour=0, minute=0, second=0, microsecond=0)
+    stop_sales_period = Period.today_to_this_time()
 
-    async with DatabaseClient(app_settings.database_api_base_url) as db_client:
-        units = UnitsConverter(await db_client.get_units())
+    with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
+        units = DatabaseAPI(database_client).get_units()
+    units = UnitsConverter(units)
 
-    async with AuthClient(app_settings.auth_service_base_url) as auth_client:
-        tasks = (auth_client.get_cookies(account_name) for account_name in units.account_names)
-        accounts_cookies = await asyncio.gather(*tasks)
+    stop_sales: list[models.StopSaleByStreet] = []
+    with httpx.Client(base_url=config.api.auth_api_base_url) as auth_client:
+        with httpx.Client(base_url=config.api.dodo_api_base_url) as dodo_api_client:
+            auth_api = AuthAPI(auth_client)
+            dodo_api = DodoAPI(dodo_api_client)
+            for account_name, grouped_units in units.grouped_by_account_name.items():
+                account_cookies = auth_api.get_account_cookies(account_name)
+                stop_sales += dodo_api.get_stop_sales_by_streets(
+                    unit_ids=grouped_units.ids,
+                    cookies=account_cookies.cookies,
+                    period=stop_sales_period,
+                )
 
-    account_names_to_unit_ids = units.account_names_to_unit_ids
-    async with DodoAPIClient(app_settings.dodo_api_base_url) as api_client:
-        tasks = (api_client.get_stop_sales_by_streets(account_cookies.cookies,
-                                                      account_names_to_unit_ids[account_cookies.account_name],
-                                                      started_at,
-                                                      ended_at)
-                 for account_cookies in accounts_cookies)
-        all_stop_sales: tuple[list[models.StopSaleByStreets], ...] = await asyncio.gather(*tasks,
-                                                                                          return_exceptions=True)
-        stop_sales = [stop_sale for stop_sales in all_stop_sales
-                      for stop_sale in stop_sales
-                      if not isinstance(stop_sales, Exception)]
-
-    unit_names_to_unit_ids = units.names_to_ids
-    print(stop_sales)
-    with get_message_queue_channel() as channel:
+    with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         for stop_sale in stop_sales:
             if stop_sale.staff_name_who_resumed is not None:
                 continue
-            message_body = {
-                'unit_id': unit_names_to_unit_ids[stop_sale.unit_name],
-                'type': 'STREET_STOP_SALES',
-                'payload': {
-                    'unit_name': stop_sale.unit_name,
-                    'started_at': stop_sale.started_at,
-                    'street_name': stop_sale.sector,
-                }
-            }
-            send_json_message(channel, message_body)
+            event = StopSaleByStreetEvent(
+                unit_id=units.unit_name_to_id[stop_sale.unit_name],
+                stop_sale=stop_sale,
+            )
+            message_queue.send_json_message(message_queue_channel, event)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
