@@ -8,6 +8,8 @@ __all__ = (
     'StopSaleByStreet',
     'StopSaleByIngredient',
     'StopSaleBySalesChannel',
+    'CommonPhoneNumberOrders',
+    'CheatedPhoneNumberOrder',
 )
 
 
@@ -46,3 +48,14 @@ class StopSaleBySalesChannel(StopSaleV2):
 
 class StopSaleByIngredient(StopSaleV2):
     ingredient_name: str
+
+
+class CheatedPhoneNumberOrder(BaseModel):
+    number: str
+    created_at: datetime.datetime
+
+
+class CommonPhoneNumberOrders(BaseModel):
+    unit_name: str
+    orders: tuple[CheatedPhoneNumberOrder]
+    phone_number: str
