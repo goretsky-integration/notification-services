@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from services.storages.base import Storage
 
 __all__ = ('DailyIngredientStopSalesStorage',)
@@ -6,27 +8,21 @@ __all__ = ('DailyIngredientStopSalesStorage',)
 class DailyIngredientStopSalesStorage(Storage):
 
     def init_tables(self) -> None:
-        query = '''
-        CREATE TABLE IF NOT EXISTS stop_sales (
-            unit_name TEXT,
-            ingredient_name TEXT,
-            UNIQUE (unit_name, ingredient_name) ON CONFLICT IGNORE
-        );
-        '''
+        query = 'CREATE TABLE IF NOT EXISTS stop_sales (id TEXT UNIQUE NOT NULL);'
         cursor = self._connection.cursor()
         cursor.execute(query)
         self._connection.commit()
 
-    def is_exist(self, unit_name: str, ingredient_name: str) -> bool:
-        query = 'SELECT unit_name, ingredient_name FROM stop_sales WHERE unit_name=? AND ingredient_name=?;'
+    def is_exist(self, stop_sale_id: UUID) -> bool:
+        query = 'SELECT id FROM stop_sales WHERE id=?;'
         cursor = self._connection.cursor()
-        cursor.execute(query, (unit_name, ingredient_name))
+        cursor.execute(query, (stop_sale_id.hex,))
         return bool(cursor.fetchone())
 
-    def insert(self, unit_name: str, ingredient_name: str) -> None:
-        query = 'INSERT INTO stop_sales (unit_name, ingredient_name) VALUES (?,?);'
+    def insert(self, stop_sale_id: UUID) -> None:
+        query = 'INSERT INTO stop_sales (id) VALUES (?);'
         cursor = self._connection.cursor()
-        cursor.execute(query, (unit_name, ingredient_name))
+        cursor.execute(query, (stop_sale_id.hex,))
         self._connection.commit()
 
     def clear_all(self) -> None:
