@@ -10,6 +10,7 @@ __all__ = (
     'StopSaleBySalesChannel',
     'CommonPhoneNumberOrders',
     'CheatedPhoneNumberOrder',
+    'CanceledOrder',
 )
 
 
@@ -59,3 +60,13 @@ class CommonPhoneNumberOrders(BaseModel):
     unit_name: str
     orders: tuple[CheatedPhoneNumberOrder]
     phone_number: str
+
+
+class CanceledOrder(BaseModel):
+    unit_name: str
+    created_at: datetime.datetime
+    receipt_printed_at: datetime.datetime | None
+    number: str
+    type: str
+    price: int
+    uuid: UUID

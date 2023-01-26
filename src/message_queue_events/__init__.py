@@ -1,3 +1,4 @@
+from .canceled_order import *
 from .cheated_phone_number import *
 from .daily_ingredient_stop import *
 from .stop_sale_by_channel import *
