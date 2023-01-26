@@ -1,3 +1,4 @@
+import datetime
 from typing import Iterable
 from uuid import UUID
 
@@ -115,3 +116,46 @@ class DodoAPI(APIService):
             period=period,
         )
         return parse_obj_as(tuple[models.StopSaleByIngredient, ...], response_data)
+
+    def get_stocks_balance(
+            self,
+            *,
+            unit_ids: Iterable[int],
+            cookies: dict,
+            days_left_threshold: int,
+    ) -> models.StocksBalanceReport:
+        request_data = {
+            'cookies': cookies,
+            'days_left_threshold': days_left_threshold,
+            'unit_ids': tuple(unit_ids),
+        }
+        response = self._client.post('/stocks/', json=request_data)
+        return models.StocksBalanceReport.parse_obj(response.json())
+
+    def get_cheated_orders(
+            self,
+            *,
+            unit_ids_and_names: Iterable[dict],
+            cookies: dict,
+            repeated_phone_number_count_threshold: int,
+    ) -> tuple[models.CommonPhoneNumberOrders, ...]:
+        request_data = {
+            'cookies': cookies,
+            'units': tuple(unit_ids_and_names),
+            'repeated_phone_number_count_threshold': repeated_phone_number_count_threshold,
+        }
+        response = self._client.post('/v1/cheated-orders', json=request_data)
+        return parse_obj_as(tuple[models.CommonPhoneNumberOrders, ...], response.json())
+
+    def get_canceled_orders(
+            self,
+            *,
+            cookies: dict,
+            date: datetime.date,
+    ) -> tuple[models.CanceledOrder, ...]:
+        request_data = {
+            'cookies': cookies,
+            'date': date.strftime('%Y-%m-%d'),
+        }
+        response = self._client.post('/v1/canceled-orders', json=request_data)
+        return parse_obj_as(tuple[models.CanceledOrder, ...], response.json())
