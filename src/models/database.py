@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-__all__ = ('Unit',)
+__all__ = ('Unit', 'Account')
 
 
 class Unit(BaseModel):
@@ -11,3 +11,9 @@ class Unit(BaseModel):
     uuid: UUID
     region: str
     account_name: str
+
+
+class Account(BaseModel):
+    name: str
+    login: str
+    password: str
