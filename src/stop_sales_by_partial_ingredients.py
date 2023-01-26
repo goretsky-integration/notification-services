@@ -1,78 +1,75 @@
-import asyncio
-import datetime
+import pathlib
+from typing import Iterable
 
-from dodolib import DatabaseClient, AuthClient, DodoAPIClient, models
-from dodolib.utils.convert_models import UnitsConverter
+import httpx
 
-from message_queue import send_json_message, get_message_queue_channel
-from settings import get_app_settings
-
-ALLOWED_INGREDIENT_NAMES = {
-    'моцарелла',
-    'пицца-соус',
-    'тесто',
-}
+import models
+from config import load_config
+from message_queue_events import StopSaleByIngredientEvent
+from services import message_queue
+from services.converters import UnitsConverter
+from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
+from services.period import Period
 
 
-def is_ingredient_name_allowed(ingredient_name: str) -> bool:
-    for allowed_ingredient_name in ALLOWED_INGREDIENT_NAMES:
-        if allowed_ingredient_name.lower().strip() in ingredient_name:
-            return True
-    return False
+class IngredientNameFilter:
+
+    def __init__(self, allowed_ingredient_names: Iterable[str], disallowed_ingredient_names: Iterable[str]):
+        self.__allowed_ingredient_names = allowed_ingredient_names
+        self.__disallowed_ingredient_names = disallowed_ingredient_names
+
+    def is_allowed(self, ingredient_name: str) -> bool:
+        ingredient_name = ingredient_name.lower().strip()
+        for disallowed_ingredient_name in self.__disallowed_ingredient_names:
+            if disallowed_ingredient_name.lower().strip() in ingredient_name:
+                return False
+        for allowed_ingredient_name in self.__allowed_ingredient_names:
+            if allowed_ingredient_name.lower().strip() in ingredient_name:
+                return True
+        return False
 
 
-async def main():
-    app_settings = get_app_settings()
-    country_code = 'ru'
-    end = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-    start = end.replace(hour=0, minute=0, second=0, microsecond=0)
+def main():
+    config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
+    config = load_config(config_file_path)
 
-    async with DatabaseClient(app_settings.database_api_base_url) as db_client:
-        units = UnitsConverter(await db_client.get_units())
+    ingredient_name_filter = IngredientNameFilter(
+        allowed_ingredient_names=config.partial_ingredients.allowed_ingredient_names,
+        disallowed_ingredient_names=config.partial_ingredients.disallowed_ingredient_names,
+    )
 
-    async with AuthClient(app_settings.auth_service_base_url) as auth_client:
-        tasks = (auth_client.get_tokens(account_name) for account_name in units.account_names)
-        tokens = await asyncio.gather(*tasks)
+    stop_sales_period = Period.today_to_this_time()
 
-    account_names_to_unit_uuids = units.account_names_to_unit_uuids
-    async with DodoAPIClient() as api_client:
-        tasks = (
-            api_client.get_stop_sales_by_ingredients(
-                token=account_token.access_token,
-                country_code=country_code,
-                unit_uuids=account_names_to_unit_uuids[account_token.account_name],
-                start=start,
-                end=end,
-            )
-            for account_token in tokens)
-        all_stop_sales: tuple[list[models.StopSaleByIngredients], ...] = await asyncio.gather(*tasks,
-                                                                                              return_exceptions=True)
-        stop_sales = []
-        for stop_sales_group in all_stop_sales:
-            if isinstance(stop_sales_group, Exception):
-                continue
-            stop_sales += stop_sales_group
+    with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
+        units = DatabaseAPI(database_client).get_units()
+    units = UnitsConverter(units)
 
-    unit_uuids_to_ids = units.uuids_to_ids
-    with get_message_queue_channel() as channel:
+    stop_sales: list[models.StopSaleByIngredient] = []
+    with httpx.Client(base_url=config.api.auth_api_base_url) as auth_client:
+        with httpx.Client(base_url=config.api.dodo_api_base_url) as dodo_api_client:
+            auth_api = AuthAPI(auth_client)
+            dodo_api = DodoAPI(dodo_api_client)
+            for account_name, grouped_units in units.grouped_by_account_name.items():
+                account_tokens = auth_api.get_account_tokens(account_name)
+                stop_sales += dodo_api.get_stop_sales_by_ingredients(
+                    country_code=config.country_code,
+                    unit_uuids=grouped_units.uuids,
+                    token=account_tokens.access_token,
+                    period=stop_sales_period,
+                )
+
+    with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         for stop_sale in stop_sales:
             if stop_sale.resumed_by_user_id is not None:
                 continue
-            if not is_ingredient_name_allowed(stop_sale.ingredient_name):
+            if not ingredient_name_filter.is_allowed(stop_sale.ingredient_name):
                 continue
-
-            message_body = {
-                'unit_id': unit_uuids_to_ids[stop_sale.unit_uuid],
-                'type': 'INGREDIENTS_STOP_SALES',
-                'payload': {
-                    'unit_name': stop_sale.unit_name,
-                    'started_at': stop_sale.started_at,
-                    'ingredient_name': stop_sale.ingredient_name,
-                    'reason': stop_sale.reason,
-                },
-            }
-            send_json_message(channel, message_body)
+            event = StopSaleByIngredientEvent(
+                unit_id=units.unit_name_to_id[stop_sale.unit_name],
+                stop_sale=stop_sale,
+            )
+            message_queue.send_json_message(message_queue_channel, event)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()

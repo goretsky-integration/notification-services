@@ -1,81 +1,61 @@
-import asyncio
 import collections
-import datetime
-from typing import Iterable
+import pathlib
+from typing import Iterable, DefaultDict
 
-from dodolib import DodoAPIClient, AuthClient, DatabaseClient, models
-from dodolib.models import StopSaleByIngredients
-from dodolib.utils.convert_models import UnitsConverter
+import httpx
 
-from message_queue import send_json_message, get_message_queue_channel
-from settings import get_app_settings
-
-
-def to_payload(unit_name: str, stop_sales_by_ingredients: Iterable[StopSaleByIngredients]) -> dict:
-    ingredient_stops = [
-        {
-            'started_at': stop_sale.started_at,
-            'reason': stop_sale.reason,
-            'name': stop_sale.ingredient_name,
-        } for stop_sale in stop_sales_by_ingredients
-    ]
-    return {'unit_name': unit_name, 'ingredients': ingredient_stops, }
+import models
+from config import load_config
+from message_queue_events import DailyIngredientStopEvent
+from services import message_queue
+from services.converters import UnitsConverter
+from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
+from services.period import Period
 
 
-def group_stop_sales_by_unit_name(
-        stop_sales: Iterable[StopSaleByIngredients],
-) -> dict[str, list[StopSaleByIngredients]]:
-    unit_name_to_stop_sales: dict[str, list[StopSaleByIngredients]] = collections.defaultdict(list)
+def group_stop_sales_by_unit_names(
+        stop_sales: Iterable[models.StopSaleByIngredient],
+) -> DefaultDict[str, list[models.StopSaleByIngredient]]:
+    unit_name_to_stop_sales = collections.defaultdict(list)
     for stop_sale in stop_sales:
-        stop_sales_by_unit_name = unit_name_to_stop_sales[stop_sale.unit_name]
-        stop_sales_by_unit_name.append(stop_sale)
+        unit_name_to_stop_sales[stop_sale.unit_name].append(stop_sale)
     return unit_name_to_stop_sales
 
 
-async def main():
-    app_settings = get_app_settings()
-    country_code = 'ru'
-    end = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-    start = end.replace(hour=0, minute=0, second=0, microsecond=0)
+def main():
+    config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
+    config = load_config(config_file_path)
 
-    async with DatabaseClient(app_settings.database_api_base_url) as db_client:
-        units = UnitsConverter(await db_client.get_units())
+    stop_sales_period = Period.today_to_this_time()
 
-    async with AuthClient(app_settings.auth_service_base_url) as auth_client:
-        tasks = (auth_client.get_tokens(account_name) for account_name in units.account_names)
-        tokens = await asyncio.gather(*tasks)
+    with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
+        units = DatabaseAPI(database_client).get_units()
+    units = UnitsConverter(units)
 
-    account_names_to_unit_uuids = units.account_names_to_unit_uuids
-    async with DodoAPIClient() as api_client:
-        tasks = (
-            api_client.get_stop_sales_by_ingredients(
-                token=account_token.access_token,
-                country_code=country_code,
-                unit_uuids=account_names_to_unit_uuids[account_token.account_name],
-                start=start,
-                end=end,
+    stop_sales: list[models.StopSaleByIngredient] = []
+    with httpx.Client(base_url=config.api.auth_api_base_url) as auth_client:
+        with httpx.Client(base_url=config.api.dodo_api_base_url) as dodo_api_client:
+            auth_api = AuthAPI(auth_client)
+            dodo_api = DodoAPI(dodo_api_client)
+            for account_name, grouped_units in units.grouped_by_account_name.items():
+                account_tokens = auth_api.get_account_tokens(account_name)
+                stop_sales += dodo_api.get_stop_sales_by_ingredients(
+                    country_code=config.country_code,
+                    unit_uuids=grouped_units.uuids,
+                    token=account_tokens.access_token,
+                    period=stop_sales_period,
+                )
+
+    with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
+        stop_sales_grouped_by_unit_name = group_stop_sales_by_unit_names(stop_sales)
+        for unit_name, grouped_stop_sales in stop_sales_grouped_by_unit_name.items():
+            event = DailyIngredientStopEvent(
+                unit_id=units.unit_name_to_id[unit_name],
+                unit_name=unit_name,
+                stop_sales=grouped_stop_sales,
             )
-            for account_token in tokens)
-        all_stop_sales: tuple[list[models.StopSaleByIngredients], ...] = await asyncio.gather(*tasks,
-                                                                                              return_exceptions=True)
-        stop_sales = []
-        for stop_sales_group in all_stop_sales:
-            if isinstance(stop_sales_group, Exception):
-                continue
-            stop_sales += stop_sales_group
-
-    unit_names_to_ids = units.names_to_ids
-    with get_message_queue_channel() as channel:
-        for unit_name, units_stop_sales in group_stop_sales_by_unit_name(stop_sales).items():
-            not_resumed_stop_sales = [stop_sale for stop_sale in units_stop_sales
-                                      if stop_sale.resumed_by_user_id is None]
-            message_body = {
-                'unit_id': unit_names_to_ids[unit_name],
-                'type': 'STOPS_AND_RESUMES',
-                'payload': to_payload(unit_name, not_resumed_stop_sales),
-            }
-            send_json_message(channel, message_body)
+            message_queue.send_json_message(message_queue_channel, event)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
