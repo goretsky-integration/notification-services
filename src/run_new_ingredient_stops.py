@@ -24,7 +24,8 @@ def group_stop_sales_by_unit_names(
 
 
 def main():
-    storage_file_path = pathlib.Path(__file__).parent.parent / 'daily_ingredient_stops.db'
+    storage_file_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage',
+                                              'daily_ingredient_stops.db')
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
 
