@@ -11,6 +11,8 @@ __all__ = (
     'CommonPhoneNumberOrders',
     'CheatedPhoneNumberOrder',
     'CanceledOrder',
+    'UnitStocksBalance',
+    'StocksBalanceReport',
 )
 
 
@@ -70,3 +72,16 @@ class CanceledOrder(BaseModel):
     type: str
     price: int
     uuid: UUID
+
+
+class UnitStocksBalance(BaseModel):
+    unit_id: int
+    ingredient_name: str
+    days_left: int
+    stocks_count: float
+    stocks_unit: str
+
+
+class StocksBalanceReport(BaseModel):
+    units: list[UnitStocksBalance]
+    error_unit_ids: set[int]
