@@ -8,7 +8,7 @@ class MessageQueueEvent(ABC):
 
     def as_bytes(self) -> bytes:
         data = self.get_data()
-        return json.dumps(data).encode('utf-8')
+        return json.dumps(data, default=str).encode('utf-8')
 
     @abstractmethod
     def get_data(self):
