@@ -1,49 +1,53 @@
-import asyncio
+import pathlib
 
-from dodolib import DatabaseClient, AuthClient, DodoAPIClient, models
-from dodolib.utils.convert_models import UnitsConverter
+import httpx
 
-from canceled_orders_storage import UUIDStorage
-from message_queue import get_message_queue_channel, send_json_message
-from settings import get_app_settings
+import models
+from config import load_config
+from message_queue_events import CanceledOrderEvent
+from services import message_queue
+from services.converters import UnitsConverter
+from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
+from services.period import Period
+from services.storages import CanceledOrdersStorage
 
 
-async def main():
-    app_settings = get_app_settings()
+def main():
+    storage_file_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage', 'canceled_orders.db')
+    config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
+    config = load_config(config_file_path)
+    current_date = Period.today_to_this_time().end.date()
 
-    async with DatabaseClient(app_settings.database_api_base_url) as db_client:
-        units, accounts = await asyncio.gather(db_client.get_units(), db_client.get_accounts())
-        units = UnitsConverter(units)
+    with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
+        database_api = DatabaseAPI(database_client)
+        units = database_api.get_units()
+        accounts = database_api.get_accounts()
+    units = UnitsConverter(units)
+    shift_manager_account_names = {account.name for account in accounts if account.name.startswith('shift')}
 
-    unit_names_to_ids = units.names_to_ids
-    shift_manager_account_names = (account.name for account in accounts if account.name.startswith('shift'))
+    canceled_orders: list[models.CanceledOrder] = []
+    with httpx.Client(base_url=config.api.auth_api_base_url) as auth_client:
+        with httpx.Client(base_url=config.api.dodo_api_base_url) as dodo_api_client:
+            auth_api = AuthAPI(auth_client)
+            dodo_api = DodoAPI(dodo_api_client)
+            for account_name in shift_manager_account_names:
+                account_cookies = auth_api.get_account_cookies(account_name)
+                canceled_orders += dodo_api.get_canceled_orders(cookies=account_cookies.cookies, date=current_date)
 
-    async with AuthClient(app_settings.auth_service_base_url) as auth_client:
-        tasks = (auth_client.get_cookies(account_name) for account_name in shift_manager_account_names)
-        accounts_cookies = await asyncio.gather(*tasks)
-
-    async with DodoAPIClient(app_settings.dodo_api_base_url) as api_client:
-        tasks = (api_client.get_canceled_orders(cookies=account.cookies) for account in accounts_cookies)
-        all_canceled_orders = await asyncio.gather(*tasks, return_exceptions=True)
-        canceled_orders: list[models.OrderByUUID] = [order for unit_canceled_orders in all_canceled_orders
-                                                     for order in unit_canceled_orders
-                                                     if not isinstance(unit_canceled_orders, Exception)]
-
-    with get_message_queue_channel() as message_queue_channel:
-        with UUIDStorage() as storage:
+    with CanceledOrdersStorage(storage_file_path) as storage:
+        with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
             for canceled_order in canceled_orders:
                 if canceled_order.receipt_printed_at is None:
                     continue
                 if storage.is_exist(canceled_order.uuid):
                     continue
-                message_body = {
-                    'type': 'CANCELED_ORDERS',
-                    'unit_id': unit_names_to_ids[canceled_order.unit_name],
-                    'payload': canceled_order.dict(),
-                }
-                send_json_message(message_queue_channel, message_body)
-                storage.add_uuid(canceled_order.uuid)
+                event = CanceledOrderEvent(
+                    unit_id=units.unit_name_to_id[canceled_order.unit_name],
+                    canceled_order=canceled_order,
+                )
+                message_queue.send_json_message(message_queue_channel, event)
+                storage.insert(canceled_order.uuid)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
