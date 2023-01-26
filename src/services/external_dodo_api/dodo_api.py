@@ -77,7 +77,7 @@ class DodoAPI(APIService):
         }
         headers = {'Authorization': f'Bearer {token}'}
         url = f'/v2/{country_code}/stop-sales/{resource}'
-        response = self._client.post(url, params=request_query_params, headers=headers)
+        response = self._client.get(url, params=request_query_params, headers=headers)
         return response.json()
 
     def get_stop_sales_by_sales_channels(
@@ -88,7 +88,7 @@ class DodoAPI(APIService):
             token: str,
             period: Period,
     ) -> tuple[models.StopSaleBySalesChannel, ...]:
-        resource = '/channels'
+        resource = 'channels'
         response_data = self.__get_stop_sales_v2(
             resource=resource,
             country_code=country_code,
@@ -106,7 +106,7 @@ class DodoAPI(APIService):
             token: str,
             period: Period,
     ) -> tuple[models.StopSaleByIngredient, ...]:
-        resource = '/ingredients'
+        resource = 'ingredients'
         response_data = self.__get_stop_sales_v2(
             resource=resource,
             country_code=country_code,
