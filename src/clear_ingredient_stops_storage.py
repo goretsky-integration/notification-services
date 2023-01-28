@@ -1,12 +1,13 @@
 import pathlib
 
-from storages import IngredientStopSaleIDsStorage
+from services.storages import DailyIngredientStopSalesStorage
 
 
 def main():
-    storage_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage', 'ingredient_stops.json')
-    with IngredientStopSaleIDsStorage(storage_path) as storage:
-        storage.clear()
+    storage_file_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage',
+                                              'daily_ingredient_stops.db')
+    with DailyIngredientStopSalesStorage(storage_file_path) as storage:
+        storage.clear_all()
 
 
 if __name__ == '__main__':
