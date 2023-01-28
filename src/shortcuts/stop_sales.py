@@ -1,10 +1,13 @@
-from typing import TypeVar, Callable, Collection
+from typing import TypeVar, Callable, Collection, Iterable
 
+import models
 from services.converters import UnitsConverter
 from services.external_dodo_api import AuthAPI
 from services.period import Period
 
 T = TypeVar('T')
+SSV1 = TypeVar('SSV1', bound=models.StopSaleV1)
+SSV2 = TypeVar('SSV2', bound=models.StopSaleV2)
 
 
 def get_stop_sales_v2(
@@ -54,3 +57,11 @@ def get_stop_sales_v1(
             else:
                 break
     return stop_sales
+
+
+def filter_not_resumed_stop_sales_v2(stop_sales: Iterable[SSV2]) -> list[SSV2]:
+    return [stop_sale for stop_sale in stop_sales if stop_sale.resumed_by_user_id is None]
+
+
+def filter_not_resumed_stop_sales_v1(stop_sales: Iterable[SSV1]) -> list[SSV1]:
+    return [stop_sale for stop_sale in stop_sales if stop_sale.staff_name_who_resumed is None]

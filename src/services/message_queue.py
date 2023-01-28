@@ -1,6 +1,7 @@
 import contextlib
 import datetime
 import json
+from typing import Iterable
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
@@ -10,6 +11,7 @@ from message_queue_events.base import MessageQueueEvent
 __all__ = (
     'get_message_queue_channel',
     'send_json_message',
+    'send_events',
 )
 
 
@@ -29,3 +31,8 @@ def send_json_message(channel: BlockingChannel, event: MessageQueueEvent):
         routing_key='telegram-notifications',
         body=json.dumps(body, default=str).encode('utf-8'),
     )
+
+
+def send_events(channel: BlockingChannel, events: Iterable[MessageQueueEvent]):
+    for event in events:
+        send_json_message(channel, event)

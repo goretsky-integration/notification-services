@@ -2,14 +2,13 @@ import pathlib
 
 import httpx
 
-import models
 from config import load_config
 from message_queue_events import StopSaleBySectorEvent
 from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
 from services.period import Period
-from shortcuts.stop_sales import get_stop_sales_v1
+from shortcuts.stop_sales import get_stop_sales_v1, filter_not_resumed_stop_sales_v1
 
 
 def main():
@@ -33,15 +32,12 @@ def main():
                 period=stop_sales_period,
             )
 
+    not_resumed_stop_sales = filter_not_resumed_stop_sales_v1(stop_sales)
+    events = [StopSaleBySectorEvent(unit_id=units.unit_name_to_id[stop_sale.unit_name], stop_sale=stop_sale)
+              for stop_sale in not_resumed_stop_sales]
+
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
-        for stop_sale in stop_sales:
-            if stop_sale.staff_name_who_resumed is not None:
-                continue
-            event = StopSaleBySectorEvent(
-                unit_id=units.unit_name_to_id[stop_sale.unit_name],
-                stop_sale=stop_sale,
-            )
-            message_queue.send_json_message(message_queue_channel, event)
+        message_queue.send_events(message_queue_channel, events)
 
 
 if __name__ == '__main__':
