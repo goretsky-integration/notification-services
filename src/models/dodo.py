@@ -13,6 +13,8 @@ __all__ = (
     'CanceledOrder',
     'UnitStocksBalance',
     'StocksBalanceReport',
+    'StopSaleV1',
+    'StopSaleV2',
 )
 
 

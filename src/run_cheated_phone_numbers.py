@@ -1,9 +1,11 @@
+import functools
 import pathlib
 
 import httpx
 
 import models
-from config import load_config
+from core import load_config
+from filters import filter_by_predicates, predicates
 from message_queue_events import CheatedPhoneNumberEvent
 from services import message_queue
 from services.converters import UnitsConverter
@@ -34,16 +36,22 @@ def main():
                 )
 
     with PhoneNumbersStorage(storage_file_path) as storage:
-        with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
-            for cheated_order in cheated_orders:
-                if len(cheated_order.orders) <= storage.get_phone_number_count(cheated_order.phone_number):
-                    continue
-                event = CheatedPhoneNumberEvent(
-                    unit_id=units.unit_name_to_id[cheated_order.unit_name],
-                    common_phone_number_orders=cheated_order,
-                )
-                message_queue.send_json_message(message_queue_channel, event)
-                storage.set_phone_numbers_count(cheated_order.phone_number, count=len(cheated_order.orders))
+        filtered_common_phone_number_orders = filter_by_predicates(
+            cheated_orders,
+            functools.partial(predicates.is_more_orders_than_in_storage, storage=storage),
+        )
+    events = [CheatedPhoneNumberEvent(unit_id=units.unit_name_to_id[cheated_order.unit_name],
+                                      common_phone_number_orders=cheated_order)
+              for cheated_order in filtered_common_phone_number_orders]
+    with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
+        message_queue.send_events(message_queue_channel, events)
+
+    with PhoneNumbersStorage(storage_file_path) as storage:
+        for common_phone_number_orders in filtered_common_phone_number_orders:
+            storage.set_phone_numbers_count(
+                phone_number=common_phone_number_orders.phone_number,
+                count=len(common_phone_number_orders.orders),
+            )
 
 
 if __name__ == '__main__':
