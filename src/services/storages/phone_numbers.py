@@ -32,3 +32,8 @@ class PhoneNumbersStorage(Storage):
         cursor.execute(query, (phone_number,))
         count = cursor.fetchone()
         return count[0] if count else 0
+
+    def clear_all(self) -> None:
+        cursor = self._connection.cursor()
+        cursor.execute('DELETE FROM phone_numbers;')
+        self._connection.commit()
