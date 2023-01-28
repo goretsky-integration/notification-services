@@ -11,6 +11,7 @@ from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
 from services.period import Period
+from shortcuts.stop_sales import get_stop_sales_v2
 
 
 def group_stop_sales_by_unit_names(
@@ -32,19 +33,17 @@ def main():
         units = DatabaseAPI(database_client).get_units()
     units = UnitsConverter(units)
 
-    stop_sales: list[models.StopSaleByIngredient] = []
     with httpx.Client(base_url=config.api.auth_api_base_url) as auth_client:
         with httpx.Client(base_url=config.api.dodo_api_base_url) as dodo_api_client:
             auth_api = AuthAPI(auth_client)
             dodo_api = DodoAPI(dodo_api_client)
-            for account_name, grouped_units in units.grouped_by_account_name.items():
-                account_tokens = auth_api.get_account_tokens(account_name)
-                stop_sales += dodo_api.get_stop_sales_by_ingredients(
-                    country_code=config.country_code,
-                    unit_uuids=grouped_units.uuids,
-                    token=account_tokens.access_token,
-                    period=stop_sales_period,
-                )
+            stop_sales = get_stop_sales_v2(
+                dodo_api_method=dodo_api.get_stop_sales_by_ingredients,
+                auth_api=auth_api,
+                units=units,
+                country_code=config.country_code,
+                period=stop_sales_period,
+            )
 
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         stop_sales_grouped_by_unit_name = group_stop_sales_by_unit_names(stop_sales)
