@@ -31,3 +31,26 @@ def get_stop_sales_v2(
             else:
                 break
     return stop_sales
+
+
+def get_stop_sales_v1(
+        dodo_api_method: Callable[..., Collection[T]],
+        auth_api: AuthAPI,
+        units: UnitsConverter,
+        period: Period,
+) -> list[T]:
+    stop_sales = []
+    for account_name, grouped_units in units.grouped_by_account_name.items():
+        for _ in range(5):
+            try:
+                account_cookies = auth_api.get_account_cookies(account_name)
+                stop_sales += dodo_api_method(
+                    unit_ids=grouped_units.ids,
+                    cookies=account_cookies.cookies,
+                    period=period,
+                )
+            except Exception:
+                pass
+            else:
+                break
+    return stop_sales
