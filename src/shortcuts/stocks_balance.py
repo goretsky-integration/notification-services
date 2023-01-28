@@ -1,4 +1,5 @@
 import collections
+import logging
 from typing import Iterable, DefaultDict
 
 import models
@@ -25,9 +26,12 @@ def get_stocks_balance(
                     days_left_threshold=1,
                 ).units
             except Exception:
-                pass
+                logging.warning(f'Could not get stocks balance for units {grouped_units.ids}. Trying again')
             else:
+                logging.info(f'Got stocks balance for units {grouped_units.ids}')
                 break
+        else:
+            logging.error(f'Could not get stocks balance for units {grouped_units.ids}')
     return stocks_balance
 
 

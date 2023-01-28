@@ -1,4 +1,5 @@
 import collections
+import logging
 from typing import TypeVar, Callable, Collection, Iterable, DefaultDict
 
 import models
@@ -29,9 +30,12 @@ def get_stop_sales_v2(
                     period=period,
                 )
             except Exception:
-                pass
+                logging.warning(f'Could not get stop sales for units {grouped_units.ids}. Trying again')
             else:
-                break
+                logging.info(f'Got stop sales for units {grouped_units.ids}')
+            break
+        else:
+            logging.error(f'Could not get stop sales for units {grouped_units.ids}')
     return stop_sales
 
 
@@ -52,9 +56,12 @@ def get_stop_sales_v1(
                     period=period,
                 )
             except Exception:
-                pass
+                logging.warning(f'Could not get stop sales for units {grouped_units.ids}. Trying again')
             else:
+                logging.info(f'Got stop sales for units {grouped_units.ids}')
                 break
+        else:
+            logging.error(f'Could not get stop sales for units {grouped_units.ids}')
     return stop_sales
 
 
