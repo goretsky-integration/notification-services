@@ -1,11 +1,8 @@
-import collections
 import pathlib
-from typing import Iterable, DefaultDict
 
 import httpx
 
-import models
-from config import load_config
+from core import load_config
 from message_queue_events import StocksBalanceEvent
 from services import message_queue
 from services.converters import UnitsConverter

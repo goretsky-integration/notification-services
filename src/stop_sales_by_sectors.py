@@ -2,7 +2,7 @@ import pathlib
 
 import httpx
 
-from config import load_config
+from core import load_config
 from filters import filter_by_predicates, predicates
 from message_queue_events import StopSaleBySectorEvent
 from services import message_queue
