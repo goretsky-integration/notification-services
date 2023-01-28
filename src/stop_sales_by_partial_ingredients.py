@@ -1,10 +1,10 @@
+import functools
 import pathlib
-from typing import Iterable
 
 import httpx
 
-import models
 from config import load_config
+from filters import filter_by_predicates, predicates
 from message_queue_events import StopSaleByIngredientEvent
 from services import message_queue
 from services.converters import UnitsConverter
@@ -13,31 +13,9 @@ from services.period import Period
 from shortcuts.stop_sales import get_stop_sales_v2
 
 
-class IngredientNameFilter:
-
-    def __init__(self, allowed_ingredient_names: Iterable[str], disallowed_ingredient_names: Iterable[str]):
-        self.__allowed_ingredient_names = allowed_ingredient_names
-        self.__disallowed_ingredient_names = disallowed_ingredient_names
-
-    def is_allowed(self, ingredient_name: str) -> bool:
-        ingredient_name = ingredient_name.lower().strip()
-        for disallowed_ingredient_name in self.__disallowed_ingredient_names:
-            if disallowed_ingredient_name.lower().strip() in ingredient_name:
-                return False
-        for allowed_ingredient_name in self.__allowed_ingredient_names:
-            if allowed_ingredient_name.lower().strip() in ingredient_name:
-                return True
-        return False
-
-
 def main():
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
-
-    ingredient_name_filter = IngredientNameFilter(
-        allowed_ingredient_names=config.partial_ingredients.allowed_ingredient_names,
-        disallowed_ingredient_names=config.partial_ingredients.disallowed_ingredient_names,
-    )
 
     stop_sales_period = Period.today_to_this_time()
 
@@ -57,17 +35,21 @@ def main():
                 period=stop_sales_period,
             )
 
+    filtered_stop_sales = filter_by_predicates(
+        filter_by_predicates(
+            stop_sales,
+            predicates.is_stop_sale_v2_stopped,
+            functools.partial(predicates.is_ingredient_name_blocked,
+                              disallowed_ingredient_names=config.partial_ingredients.disallowed_ingredient_names),
+            functools.partial(predicates.is_ingredient_name_allowed,
+                              allowed_ingredient_names=config.partial_ingredients.allowed_ingredient_names),
+        )
+    )
+    events = [StopSaleByIngredientEvent(unit_id=units.unit_uuid_to_id[stop_sale.unit_uuid], stop_sale=stop_sale)
+              for stop_sale in filtered_stop_sales]
+
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
-        for stop_sale in stop_sales:
-            if stop_sale.resumed_by_user_id is not None:
-                continue
-            if not ingredient_name_filter.is_allowed(stop_sale.ingredient_name):
-                continue
-            event = StopSaleByIngredientEvent(
-                unit_id=units.unit_name_to_id[stop_sale.unit_name],
-                stop_sale=stop_sale,
-            )
-            message_queue.send_json_message(message_queue_channel, event)
+        message_queue.send_events(message_queue_channel, events)
 
 
 if __name__ == '__main__':

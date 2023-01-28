@@ -1,4 +1,5 @@
-from typing import TypeVar, Callable, Collection, Iterable
+import collections
+from typing import TypeVar, Callable, Collection, Iterable, DefaultDict
 
 import models
 from services.converters import UnitsConverter
@@ -6,8 +7,6 @@ from services.external_dodo_api import AuthAPI
 from services.period import Period
 
 T = TypeVar('T')
-SSV1 = TypeVar('SSV1', bound=models.StopSaleV1)
-SSV2 = TypeVar('SSV2', bound=models.StopSaleV2)
 
 
 def get_stop_sales_v2(
@@ -59,9 +58,10 @@ def get_stop_sales_v1(
     return stop_sales
 
 
-def filter_not_resumed_stop_sales_v2(stop_sales: Iterable[SSV2]) -> list[SSV2]:
-    return [stop_sale for stop_sale in stop_sales if stop_sale.resumed_by_user_id is None]
-
-
-def filter_not_resumed_stop_sales_v1(stop_sales: Iterable[SSV1]) -> list[SSV1]:
-    return [stop_sale for stop_sale in stop_sales if stop_sale.staff_name_who_resumed is None]
+def group_stop_sales_by_unit_names(
+        stop_sales: Iterable[models.StopSaleV1 | models.StopSaleV2 | T],
+) -> DefaultDict[str, list[T]]:
+    unit_name_to_stop_sales = collections.defaultdict(list)
+    for stop_sale in stop_sales:
+        unit_name_to_stop_sales[stop_sale.unit_name].append(stop_sale)
+    return unit_name_to_stop_sales

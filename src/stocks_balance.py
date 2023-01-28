@@ -42,14 +42,16 @@ def main():
                     days_left_threshold=1,
                 ).units
 
+    events = [
+        StocksBalanceEvent(
+            unit_id=unit_id,
+            unit_name=units.unit_id_to_name[unit_id],
+            units_stocks_balance=unit_stocks_balance,
+        ) for unit_id, unit_stocks_balance in group_stocks_balance_by_unit_id(stocks_balance).items()
+    ]
+
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
-        for unit_id, unit_stocks_balance in group_stocks_balance_by_unit_id(stocks_balance).items():
-            event = StocksBalanceEvent(
-                unit_id=unit_id,
-                unit_name=units.unit_id_to_name[unit_id],
-                units_stocks_balance=unit_stocks_balance,
-            )
-            message_queue.send_json_message(message_queue_channel, event)
+        message_queue.send_events(message_queue_channel, events)
 
 
 if __name__ == '__main__':

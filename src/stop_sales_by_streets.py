@@ -3,12 +3,13 @@ import pathlib
 import httpx
 
 from config import load_config
+from filters import filter_by_predicates, predicates
 from message_queue_events import StopSaleByStreetEvent
 from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
 from services.period import Period
-from shortcuts.stop_sales import get_stop_sales_v1, filter_not_resumed_stop_sales_v1
+from shortcuts.stop_sales import get_stop_sales_v1
 
 
 def main():
@@ -32,9 +33,9 @@ def main():
                 period=stop_sales_period,
             )
 
-    not_resumed_stop_sales = filter_not_resumed_stop_sales_v1(stop_sales)
+    filtered_stop_sales = filter_by_predicates(stop_sales, predicates.is_stop_sale_v1_stopped)
     events = [StopSaleByStreetEvent(unit_id=units.unit_name_to_id[stop_sale.unit_name], stop_sale=stop_sale)
-              for stop_sale in not_resumed_stop_sales]
+              for stop_sale in filtered_stop_sales]
 
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
