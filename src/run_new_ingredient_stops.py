@@ -3,7 +3,7 @@ import pathlib
 
 import httpx
 
-from core import load_config
+from core import load_config, setup_logging
 from filters import filter_by_predicates, predicates
 from message_queue_events import DailyIngredientStopEvent
 from services import message_queue
@@ -19,6 +19,8 @@ def main():
                                               'daily_ingredient_stops.db')
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
+
+    setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
 
     stop_sales_period = Period.today_to_this_time()
 
@@ -58,7 +60,7 @@ def main():
 
     with ObjectUUIDStorage(storage_file_path) as storage:
         for stop_sale in filtered_stop_sales:
-            storage.insert(stop_sale.id)
+            storage.insert(stop_sale.uuid)
 
 
 if __name__ == '__main__':

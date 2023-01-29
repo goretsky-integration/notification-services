@@ -1,5 +1,9 @@
 country_code = ""
 
+[logging]
+level = ""
+file_path = ""
+
 [api]
 dodo_api_url = ""
 database_api_url = ""
