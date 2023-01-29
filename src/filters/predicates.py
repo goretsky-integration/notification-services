@@ -11,6 +11,7 @@ __all__ = (
     'is_object_uuid_not_in_storage',
     'has_printed_receipt',
     'is_more_orders_than_in_storage',
+    'is_orders_count_more_than'
 )
 
 T = TypeVar('T')
@@ -54,3 +55,10 @@ def is_more_orders_than_in_storage(
 ) -> bool:
     count_in_storage = storage.get_phone_number_count(common_phone_number_orders.phone_number)
     return len(common_phone_number_orders.orders) > count_in_storage
+
+
+def is_orders_count_more_than(
+        common_phone_number_orders: models.CommonPhoneNumberOrders,
+        count: int,
+) -> bool:
+    return len(common_phone_number_orders.orders) > count
