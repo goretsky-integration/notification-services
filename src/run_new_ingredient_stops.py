@@ -5,12 +5,12 @@ import httpx
 
 from core import load_config
 from filters import filter_by_predicates, predicates
+from message_queue_events import DailyIngredientStopEvent
 from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
 from services.period import Period
-from message_queue_events import DailyIngredientStopEvent
-from services.storages import DailyIngredientStopSalesStorage
+from services.storages import ObjectUUIDStorage
 from shortcuts.stop_sales import get_stop_sales_v2, group_stop_sales_by_unit_names
 
 
@@ -38,7 +38,7 @@ def main():
                 period=stop_sales_period,
             )
 
-    with DailyIngredientStopSalesStorage(storage_file_path) as storage:
+    with ObjectUUIDStorage(storage_file_path) as storage:
         filtered_stop_sales = filter_by_predicates(
             stop_sales,
             predicates.is_stop_sale_v2_stopped,
@@ -56,7 +56,7 @@ def main():
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
 
-    with DailyIngredientStopSalesStorage(storage_file_path) as storage:
+    with ObjectUUIDStorage(storage_file_path) as storage:
         for stop_sale in filtered_stop_sales:
             storage.insert(stop_sale.id)
 

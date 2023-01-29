@@ -1,7 +1,7 @@
-from typing import Iterable, TypeVar, Sized
+from typing import Iterable, TypeVar
 
 import models
-from services.storages import DailyIngredientStopSalesStorage, PhoneNumbersStorage
+from services.storages import PhoneNumbersStorage, ObjectUUIDStorage
 
 __all__ = (
     'is_stop_sale_v1_stopped',
@@ -40,7 +40,7 @@ def is_ingredient_name_not_blocked(
                 for disallowed_name in disallowed_ingredient_names))
 
 
-def is_object_uuid_not_in_storage(element: T, storage: DailyIngredientStopSalesStorage) -> bool:
+def is_object_uuid_not_in_storage(element: T, storage: ObjectUUIDStorage) -> bool:
     return not storage.is_exist(element.uuid)
 
 

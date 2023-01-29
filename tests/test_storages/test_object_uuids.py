@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from services.storages import DailyIngredientStopSalesStorage
+from services.storages import ObjectUUIDStorage
 
 
 @pytest.mark.parametrize(
@@ -16,9 +16,9 @@ from services.storages import DailyIngredientStopSalesStorage
         uuid4(),
     ]
 )
-def test_insert_and_exists_stop_sales(stop_sale_id):
+def test_insert_and_exists_uuids(stop_sale_id):
     storage_file_path = './daily_ingredient_stop_sales.db'
-    with DailyIngredientStopSalesStorage(storage_file_path) as storage:
+    with ObjectUUIDStorage(storage_file_path) as storage:
         try:
             assert not storage.is_exist(stop_sale_id)
             storage.insert(stop_sale_id)
