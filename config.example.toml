@@ -13,5 +13,10 @@ auth_api_url = ""
 disallowed_ingredient_names = []
 allowed_ingredient_names = []
 
+[cheated_orders]
+skipped_phone_numbers = [
+    ""
+]
+
 [message_queue]
 rabbitmq_url = ""
