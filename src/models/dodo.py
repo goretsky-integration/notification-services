@@ -1,7 +1,7 @@
 import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 __all__ = (
     'StopSaleBySector',
@@ -36,7 +36,7 @@ class StopSaleByStreet(StopSaleV1):
 
 
 class StopSaleV2(BaseModel):
-    id: UUID
+    uuid: UUID = Field(alias='id')
     unit_uuid: UUID
     unit_name: str
     reason: str
