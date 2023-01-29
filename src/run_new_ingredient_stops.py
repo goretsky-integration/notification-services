@@ -58,7 +58,7 @@ def main():
 
     with ObjectUUIDStorage(storage_file_path) as storage:
         for stop_sale in filtered_stop_sales:
-            storage.insert(stop_sale.id)
+            storage.insert(stop_sale.uuid)
 
 
 if __name__ == '__main__':
