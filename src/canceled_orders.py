@@ -11,7 +11,7 @@ from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
 from services.period import Period
-from services.storages import CanceledOrdersStorage
+from services.storages import ObjectUUIDStorage
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
                 account_cookies = auth_api.get_account_cookies(account_name)
                 canceled_orders += dodo_api.get_canceled_orders(cookies=account_cookies.cookies, date=current_date)
 
-    with CanceledOrdersStorage(storage_file_path) as storage:
+    with ObjectUUIDStorage(storage_file_path) as storage:
         filtered_canceled_orders = filter_by_predicates(
             canceled_orders,
             predicates.has_printed_receipt,
@@ -50,7 +50,7 @@ def main():
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
 
-    with CanceledOrdersStorage(storage_file_path) as storage:
+    with ObjectUUIDStorage(storage_file_path) as storage:
         for canceled_order in filtered_canceled_orders:
             storage.insert(canceled_order.uuid)
 
