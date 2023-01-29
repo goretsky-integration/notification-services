@@ -38,6 +38,7 @@ def main():
     with PhoneNumbersStorage(storage_file_path) as storage:
         filtered_common_phone_number_orders = filter_by_predicates(
             cheated_orders,
+            functools.partial(predicates.is_orders_count_more_than, count=2),
             functools.partial(predicates.is_more_orders_than_in_storage, storage=storage),
         )
     events = [CheatedPhoneNumberEvent(unit_id=units.unit_name_to_id[cheated_order.unit_name],
