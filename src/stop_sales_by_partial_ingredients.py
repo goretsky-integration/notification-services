@@ -39,7 +39,7 @@ def main():
         filter_by_predicates(
             stop_sales,
             predicates.is_stop_sale_v2_stopped,
-            functools.partial(predicates.is_ingredient_name_blocked,
+            functools.partial(predicates.is_ingredient_name_not_blocked,
                               disallowed_ingredient_names=config.partial_ingredients.disallowed_ingredient_names),
             functools.partial(predicates.is_ingredient_name_allowed,
                               allowed_ingredient_names=config.partial_ingredients.allowed_ingredient_names),
