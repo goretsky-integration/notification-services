@@ -12,7 +12,7 @@ class CanceledOrderEvent(MessageQueueEvent):
 
     def get_data(self):
         return {
-            'unit_id': self,
+            'unit_id': self.__unit_id,
             'type': 'CANCELED_ORDERS',
             'payload': {
                 "unit_name": self.__canceled_order.unit_name,
