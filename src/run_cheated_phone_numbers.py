@@ -4,7 +4,7 @@ import pathlib
 import httpx
 
 import models
-from core import load_config
+from core import load_config, setup_logging
 from filters import filter_by_predicates, predicates
 from message_queue_events import CheatedPhoneNumberEvent
 from services import message_queue
@@ -17,6 +17,8 @@ def main():
     storage_file_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage', 'phone_numbers.db')
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
+
+    setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
 
     with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
         units = DatabaseAPI(database_client).get_units()

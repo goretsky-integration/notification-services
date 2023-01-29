@@ -1,10 +1,11 @@
 import functools
+import logging
 import pathlib
 
 import httpx
 
 import models
-from core import load_config
+from core import load_config, setup_logging
 from filters import filter_by_predicates, predicates
 from message_queue_events import CanceledOrderEvent
 from services import message_queue
@@ -19,6 +20,9 @@ def main():
                                               'canceled_orders.db')
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
+
+    setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
+
     current_date = Period.today_to_this_time().end.date()
 
     with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
@@ -34,8 +38,11 @@ def main():
             auth_api = AuthAPI(auth_client)
             dodo_api = DodoAPI(dodo_api_client)
             for account_name in shift_manager_account_names:
-                account_cookies = auth_api.get_account_cookies(account_name)
-                canceled_orders += dodo_api.get_canceled_orders(cookies=account_cookies.cookies, date=current_date)
+                try:
+                    account_cookies = auth_api.get_account_cookies(account_name)
+                    canceled_orders += dodo_api.get_canceled_orders(cookies=account_cookies.cookies, date=current_date)
+                except Exception:
+                    logging.error(f'Could not get canceled orders for account {account_name}')
 
     with ObjectUUIDStorage(storage_file_path) as storage:
         filtered_canceled_orders = filter_by_predicates(
@@ -53,6 +60,7 @@ def main():
     with ObjectUUIDStorage(storage_file_path) as storage:
         for canceled_order in filtered_canceled_orders:
             storage.insert(canceled_order.uuid)
+            logging.info(f'New canceled order {canceled_order.uuid}')
 
 
 if __name__ == '__main__':

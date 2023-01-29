@@ -1,8 +1,9 @@
+import logging
 import pathlib
 
 import httpx
 
-from core import load_config
+from core import load_config, setup_logging
 from message_queue_events import StocksBalanceEvent
 from services import message_queue
 from services.converters import UnitsConverter
@@ -13,6 +14,8 @@ from shortcuts.stocks_balance import get_stocks_balance, group_stocks_balance_by
 def main():
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
+
+    setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
 
     with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
         units = DatabaseAPI(database_client).get_units()

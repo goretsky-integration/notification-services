@@ -2,7 +2,7 @@ import pathlib
 
 import httpx
 
-from core import load_config
+from core import load_config, setup_logging
 from filters import predicates, filter_by_predicates
 from message_queue_events import DailyIngredientStopEvent
 from services import message_queue
@@ -15,6 +15,8 @@ from shortcuts.stop_sales import get_stop_sales_v2, group_stop_sales_by_unit_nam
 def main():
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
+
+    setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
 
     stop_sales_period = Period.today_to_this_time()
 
