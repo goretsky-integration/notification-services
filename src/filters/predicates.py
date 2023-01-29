@@ -7,7 +7,7 @@ __all__ = (
     'is_stop_sale_v1_stopped',
     'is_stop_sale_v2_stopped',
     'is_ingredient_name_allowed',
-    'is_ingredient_name_blocked',
+    'is_ingredient_name_not_blocked',
     'is_object_uuid_not_in_storage',
     'has_printed_receipt',
     'is_more_orders_than_in_storage',
@@ -32,7 +32,7 @@ def is_ingredient_name_allowed(
                 for allowed_name in allowed_ingredient_names))
 
 
-def is_ingredient_name_blocked(
+def is_ingredient_name_not_blocked(
         stop_sale: models.StopSaleByIngredient,
         disallowed_ingredient_names: Iterable[str],
 ) -> bool:
