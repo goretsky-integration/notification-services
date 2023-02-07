@@ -1,4 +1,3 @@
-import datetime
 from typing import Iterable
 from uuid import UUID
 
@@ -16,18 +15,18 @@ class DodoAPI(APIService):
             self,
             *,
             resource: str,
+            country_code: str,
             unit_ids: Iterable[int],
             cookies: dict,
             period: Period,
     ) -> list[dict]:
-        request_body = {
+        request_query_params = {
             'unit_ids': tuple(unit_ids),
-            'cookies': cookies,
             'start': period.start.strftime('%Y-%m-%dT%H:%M:%S'),
             'end': period.end.strftime('%Y-%m-%dT%H:%M:%S'),
         }
-        url = f'/v1/stop-sales/{resource}'
-        response = self._client.post(url, json=request_body)
+        url = f'/v1/{country_code}/stop-sales/{resource}'
+        response = self._client.get(url, cookies=cookies, params=request_query_params)
         return response.json()
 
     def get_stop_sales_by_sectors(
@@ -35,6 +34,7 @@ class DodoAPI(APIService):
             *,
             unit_ids: Iterable[int],
             cookies: dict,
+            country_code: str,
             period: Period,
     ) -> tuple[models.StopSaleBySector, ...]:
         resource = 'sectors'
@@ -43,6 +43,7 @@ class DodoAPI(APIService):
             unit_ids=unit_ids,
             cookies=cookies,
             period=period,
+            country_code=country_code,
         )
         return parse_obj_as(tuple[models.StopSaleBySector, ...], response_data)
 
@@ -51,6 +52,7 @@ class DodoAPI(APIService):
             *,
             unit_ids: Iterable[int],
             cookies: dict,
+            country_code: str,
             period: Period,
     ) -> tuple[models.StopSaleByStreet, ...]:
         resource = 'streets'
@@ -59,6 +61,7 @@ class DodoAPI(APIService):
             unit_ids=unit_ids,
             cookies=cookies,
             period=period,
+            country_code=country_code,
         )
         return parse_obj_as(tuple[models.StopSaleByStreet, ...], response_data)
 
@@ -120,16 +123,16 @@ class DodoAPI(APIService):
     def get_stocks_balance(
             self,
             *,
+            country_code: str,
             unit_ids: Iterable[int],
             cookies: dict,
             days_left_threshold: int,
     ) -> models.StocksBalanceReport:
-        request_data = {
-            'cookies': cookies,
+        request_query_params = {
             'days_left_threshold': days_left_threshold,
             'unit_ids': tuple(unit_ids),
         }
-        response = self._client.post('/stocks/', json=request_data)
+        response = self._client.get(f'/v1/{country_code}/stocks', cookies=cookies, params=request_query_params)
         return models.StocksBalanceReport.parse_obj(response.json())
 
     def get_cheated_orders(
@@ -137,25 +140,21 @@ class DodoAPI(APIService):
             *,
             unit_ids_and_names: Iterable[dict],
             cookies: dict,
+            country_code: str,
             repeated_phone_number_count_threshold: int,
     ) -> tuple[models.CommonPhoneNumberOrders, ...]:
         request_data = {
-            'cookies': cookies,
             'units': tuple(unit_ids_and_names),
             'repeated_phone_number_count_threshold': repeated_phone_number_count_threshold,
         }
-        response = self._client.post('/v1/cheated-orders', json=request_data)
+        response = self._client.post(f'/v1/{country_code}/cheated-orders', cookies=cookies, json=request_data)
         return parse_obj_as(tuple[models.CommonPhoneNumberOrders, ...], response.json())
 
     def get_canceled_orders(
             self,
             *,
             cookies: dict,
-            date: datetime.date,
+            country_code: str,
     ) -> tuple[models.CanceledOrder, ...]:
-        request_data = {
-            'cookies': cookies,
-            'date': date.strftime('%Y-%m-%d'),
-        }
-        response = self._client.post('/v1/canceled-orders', json=request_data)
+        response = self._client.get(f'/v1/{country_code}/canceled-orders', cookies=cookies)
         return parse_obj_as(tuple[models.CanceledOrder, ...], response.json())

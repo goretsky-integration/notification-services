@@ -35,6 +35,7 @@ def main():
                     unit_ids_and_names=grouped_units.ids_and_names,
                     cookies=account_cookies.cookies,
                     repeated_phone_number_count_threshold=3,
+                    country_code=config.country_code,
                 )
 
     with PhoneNumbersStorage(storage_file_path) as storage:

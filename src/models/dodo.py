@@ -74,6 +74,8 @@ class CanceledOrder(BaseModel):
     type: str
     price: int
     uuid: UUID
+    courier_name: str | None
+    rejected_by_user_name: str | None
 
 
 class UnitStocksBalance(BaseModel):

@@ -44,6 +44,7 @@ def get_stop_sales_v1(
         auth_api: AuthAPI,
         units: UnitsConverter,
         period: Period,
+        country_code: str,
 ) -> list[T]:
     stop_sales = []
     for account_name, grouped_units in units.grouped_by_account_name.items():
@@ -54,6 +55,7 @@ def get_stop_sales_v1(
                     unit_ids=grouped_units.ids,
                     cookies=account_cookies.cookies,
                     period=period,
+                    country_code=country_code,
                 )
             except Exception:
                 logging.warning(f'Could not get stop sales for units {grouped_units.ids}. Trying again')
