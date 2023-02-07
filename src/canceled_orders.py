@@ -11,7 +11,6 @@ from message_queue_events import CanceledOrderEvent
 from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
-from services.period import Period
 from services.storages import ObjectUUIDStorage
 
 
@@ -22,8 +21,6 @@ def main():
     config = load_config(config_file_path)
 
     setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
-
-    current_date = Period.today_to_this_time().end.date()
 
     with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
         database_api = DatabaseAPI(database_client)
@@ -40,10 +37,10 @@ def main():
             for account_name in shift_manager_account_names:
                 try:
                     account_cookies = auth_api.get_account_cookies(account_name)
-                    canceled_orders += dodo_api.get_canceled_orders(cookies=account_cookies.cookies, date=current_date)
+                    canceled_orders += dodo_api.get_canceled_orders(cookies=account_cookies.cookies,
+                                                                    country_code=config.country_code)
                 except Exception:
                     logging.error(f'Could not get canceled orders for account {account_name}')
-
     with ObjectUUIDStorage(storage_file_path) as storage:
         filtered_canceled_orders = filter_by_predicates(
             canceled_orders,

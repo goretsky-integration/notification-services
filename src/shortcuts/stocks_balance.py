@@ -14,6 +14,7 @@ def get_stocks_balance(
         dodo_api: DodoAPI,
         auth_api: AuthAPI,
         units: UnitsConverter,
+        country_code: str,
 ) -> list[models.UnitStocksBalance]:
     stocks_balance: list[models.UnitStocksBalance] = []
     for account_name, grouped_units in units.grouped_by_account_name.items():
@@ -24,6 +25,7 @@ def get_stocks_balance(
                     unit_ids=grouped_units.ids,
                     cookies=account_cookies.cookies,
                     days_left_threshold=1,
+                    country_code=country_code,
                 ).units
             except Exception:
                 logging.warning(f'Could not get stocks balance for units {grouped_units.ids}. Trying again')

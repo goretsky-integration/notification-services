@@ -31,6 +31,7 @@ def main():
                 auth_api=auth_api,
                 units=units,
                 period=stop_sales_period,
+                country_code=config.country_code,
             )
 
     filtered_stop_sales = filter_by_predicates(stop_sales, predicates.is_stop_sale_v1_stopped)

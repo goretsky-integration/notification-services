@@ -1,4 +1,3 @@
-import logging
 import pathlib
 
 import httpx
@@ -25,8 +24,8 @@ def main():
         with httpx.Client(base_url=config.api.dodo_api_base_url, timeout=60) as dodo_api_client:
             auth_api = AuthAPI(auth_client)
             dodo_api = DodoAPI(dodo_api_client)
-            stocks_balance = get_stocks_balance(dodo_api=dodo_api, auth_api=auth_api, units=units)
-
+            stocks_balance = get_stocks_balance(dodo_api=dodo_api, auth_api=auth_api,
+                                                units=units, country_code=config.country_code)
     events = [
         StocksBalanceEvent(
             unit_id=unit_id,
