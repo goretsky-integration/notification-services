@@ -6,7 +6,7 @@ import httpx
 
 import models
 from core import load_config, setup_logging
-from filters import filter_by_predicates, predicates
+from filters import filter_by_predicates, predicates, filter_via_any_predicate
 from message_queue_events import CanceledOrderEvent
 from services import message_queue
 from services.converters import UnitsConverter
@@ -43,8 +43,11 @@ def main():
                     logging.error(f'Could not get canceled orders for account {account_name}')
     with ObjectUUIDStorage(storage_file_path) as storage:
         filtered_canceled_orders = filter_by_predicates(
-            canceled_orders,
-            predicates.has_printed_receipt,
+            filter_via_any_predicate(
+                canceled_orders,
+                predicates.has_appointed_courier,
+                predicates.has_rejected_by_user_name,
+            ),
             functools.partial(predicates.is_object_uuid_not_in_storage, storage=storage),
         )
     events = [
