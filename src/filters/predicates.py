@@ -11,7 +11,9 @@ __all__ = (
     'is_object_uuid_not_in_storage',
     'has_printed_receipt',
     'is_more_orders_than_in_storage',
-    'is_orders_count_more_than'
+    'is_orders_count_more_than',
+    'has_appointed_courier',
+    'has_rejected_by_user_name',
 )
 
 T = TypeVar('T')
@@ -62,3 +64,11 @@ def is_orders_count_more_than(
         count: int,
 ) -> bool:
     return len(common_phone_number_orders.orders) > count
+
+
+def has_appointed_courier(canceled_order: models.CanceledOrder) -> bool:
+    return canceled_order.courier_name is not None
+
+
+def has_rejected_by_user_name(canceled_order: models.CanceledOrder) -> bool:
+    return canceled_order.rejected_by_user_name is not None
