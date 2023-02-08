@@ -26,14 +26,23 @@ def main():
             dodo_api = DodoAPI(dodo_api_client)
             stocks_balance = get_stocks_balance(dodo_api=dodo_api, auth_api=auth_api,
                                                 units=units, country_code=config.country_code)
-    events = [
+    running_out_stocks_grouped_by_unit_id = group_stocks_balance_by_unit_id(stocks_balance)
+    unit_ids_without_running_out_stocks = units.ids - set(running_out_stocks_grouped_by_unit_id)
+    events_with_running_out_stocks = [
         StocksBalanceEvent(
             unit_id=unit_id,
             unit_name=units.unit_id_to_name[unit_id],
             units_stocks_balance=unit_stocks_balance,
-        ) for unit_id, unit_stocks_balance in group_stocks_balance_by_unit_id(stocks_balance).items()
+        ) for unit_id, unit_stocks_balance in running_out_stocks_grouped_by_unit_id.items()
     ]
-
+    events_without_running_out_stocks = [
+        StocksBalanceEvent(
+            unit_id=unit_id,
+            unit_name=units.unit_id_to_name[unit_id],
+            units_stocks_balance=[],
+        ) for unit_id in unit_ids_without_running_out_stocks
+    ]
+    events = events_with_running_out_stocks + events_without_running_out_stocks
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
 
