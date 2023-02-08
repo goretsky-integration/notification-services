@@ -37,13 +37,22 @@ def main():
             )
     filtered_stop_sales = filter_by_predicates(stop_sales, predicates.is_stop_sale_v2_stopped)
     stop_sales_grouped_by_unit_name = group_stop_sales_by_unit_names(filtered_stop_sales)
-    events = [
+    unit_names_without_stop_sales = units.names - set(stop_sales_grouped_by_unit_name)
+    events_without_stop_sales = [
+        DailyIngredientStopEvent(
+            unit_id=units.unit_name_to_id[unit_name],
+            unit_name=unit_name,
+            stop_sales=[],
+        ) for unit_name in unit_names_without_stop_sales
+    ]
+    events_with_stop_sales = [
         DailyIngredientStopEvent(
             unit_id=units.unit_name_to_id[unit_name],
             unit_name=unit_name,
             stop_sales=grouped_stop_sales,
         ) for unit_name, grouped_stop_sales in stop_sales_grouped_by_unit_name.items()
     ]
+    events = events_with_stop_sales + events_without_stop_sales
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
 
