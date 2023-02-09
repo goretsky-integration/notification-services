@@ -17,7 +17,7 @@ class CanceledOrderEvent(MessageQueueEvent):
             'payload': {
                 "unit_name": self.__canceled_order.unit_name,
                 "created_at": self.__canceled_order.created_at,
-                "receipt_printed_at": self.__canceled_order.receipt_printed_at,
+                "canceled_at": self.__canceled_order.canceled_at,
                 "number": self.__canceled_order.number,
                 "type": self.__canceled_order.type,
                 "price": self.__canceled_order.price,
