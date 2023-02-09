@@ -69,6 +69,7 @@ class CommonPhoneNumberOrders(BaseModel):
 class CanceledOrder(BaseModel):
     unit_name: str
     created_at: datetime.datetime
+    canceled_at: datetime.datetime
     receipt_printed_at: datetime.datetime | None
     number: str
     type: str
