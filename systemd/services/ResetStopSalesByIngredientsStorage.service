@@ -1,6 +1,0 @@
-[Unit]
-Description=Reset stop sales by ingredients storage service
-
-[Service]
-Type=oneshot
-ExecStart=
