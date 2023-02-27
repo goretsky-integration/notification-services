@@ -23,6 +23,10 @@ def get_stop_sales_v2(
         for _ in range(5):
             try:
                 account_tokens = auth_api.get_account_tokens(account_name)
+            except Exception:
+                logging.exception(f'Could not get account tokens for account {account_name}')
+                continue
+            try:
                 stop_sales += dodo_api_method(
                     country_code=country_code,
                     unit_uuids=grouped_units.uuids,
@@ -30,12 +34,12 @@ def get_stop_sales_v2(
                     period=period,
                 )
             except Exception:
-                logging.warning(f'Could not get stop sales for units {grouped_units.ids}. Trying again')
+                logging.exception(f'Could not get stop sales for units {grouped_units.ids}. Trying again')
             else:
                 logging.info(f'Got stop sales for units {grouped_units.ids}')
             break
         else:
-            logging.error(f'Could not get stop sales for units {grouped_units.ids}')
+            logging.exception(f'Could not get stop sales for units {grouped_units.ids}')
     return stop_sales
 
 
