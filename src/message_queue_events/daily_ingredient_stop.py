@@ -29,3 +29,6 @@ class DailyIngredientStopEvent(MessageQueueEvent):
                 'ingredients': ingredients,
             },
         }
+
+    def __repr__(self):
+        return f'<Event Stop Sale By Ingredients: {self.__unit_name}>'

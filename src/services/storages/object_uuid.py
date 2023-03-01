@@ -20,7 +20,7 @@ class ObjectUUIDStorage(Storage):
         return bool(cursor.fetchone())
 
     def insert(self, object_uuid: UUID) -> None:
-        query = 'INSERT INTO uuids (id) VALUES (?);'
+        query = 'INSERT INTO uuids (id) VALUES (?) ON CONFLICT (id) DO NOTHING;'
         cursor = self._connection.cursor()
         cursor.execute(query, (object_uuid.hex,))
         self._connection.commit()
