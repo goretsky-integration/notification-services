@@ -21,3 +21,6 @@ class StopSaleByIngredientEvent(MessageQueueEvent):
                 'reason': self.__stop_sale.reason,
             },
         }
+
+    def __repr__(self):
+        return f'<Event Partial Ingredients Stop Sale {self.__stop_sale.unit_name}, {self.__stop_sale.ingredient_name}>'
