@@ -1,4 +1,6 @@
 import datetime
+from dataclasses import dataclass
+from typing import Generic, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -15,6 +17,7 @@ __all__ = (
     'StocksBalanceReport',
     'StopSaleV1',
     'StopSaleV2',
+    'StopSalesBatchResponse',
 )
 
 
@@ -90,3 +93,12 @@ class UnitStocksBalance(BaseModel):
 class StocksBalanceReport(BaseModel):
     units: list[UnitStocksBalance]
     error_unit_ids: set[int]
+
+
+StopSalesT = TypeVar('StopSalesT')
+
+
+@dataclass(frozen=True, slots=True)
+class StopSalesBatchResponse(Generic[StopSalesT]):
+    result: list[StopSalesT]
+    error_unit_ids: list[int]

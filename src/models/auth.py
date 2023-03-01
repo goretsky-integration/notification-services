@@ -1,6 +1,15 @@
+from dataclasses import dataclass
+from typing import TypeVar, Generic
+
 from pydantic import BaseModel
 
-__all__ = ('AccountTokens', 'AccountCookies')
+__all__ = (
+    'AccountTokens',
+    'AccountCookies',
+    'AccountsCredentialsBatchResponse',
+)
+
+AccountCredentialsT = TypeVar('AccountCredentialsT')
 
 
 class AccountTokens(BaseModel):
@@ -12,3 +21,9 @@ class AccountTokens(BaseModel):
 class AccountCookies(BaseModel):
     account_name: str
     cookies: dict[str, str]
+
+
+@dataclass(frozen=True, slots=True)
+class AccountsCredentialsBatchResponse(Generic[AccountCredentialsT]):
+    result: list[AccountCredentialsT]
+    errors: list[str]
