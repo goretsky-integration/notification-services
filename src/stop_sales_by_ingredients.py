@@ -39,6 +39,11 @@ def main():
         action='store_true',
         help='Filter only partial ingredients in the config file',
     )
+    argument_parser.add_argument(
+        '--include-empty-units',
+        action='store_true',
+        help='Create event even if unit has no stop sales',
+    )
 
     arguments = argument_parser.parse_args()
 
@@ -111,6 +116,7 @@ def main():
         ]
     else:
         stop_sales_grouped_by_unit_name = group_stop_sales_by_unit_names(filtered_stop_sales)
+
         events = [
             DailyIngredientStopEvent(
                 unit_id=units.unit_name_to_id[unit_name],
@@ -118,6 +124,18 @@ def main():
                 stop_sales=grouped_stop_sales,
             ) for unit_name, grouped_stop_sales in stop_sales_grouped_by_unit_name.items()
         ]
+
+        if arguments.include_empty_units:
+            unit_names_with_stop_sales = set(stop_sales_grouped_by_unit_name)
+            unit_names_without_stop_sales = units.names - unit_names_with_stop_sales
+
+            events += [
+                DailyIngredientStopEvent(
+                    unit_id=units.unit_name_to_id[unit_name],
+                    unit_name=unit_name,
+                    stop_sales=[],
+                ) for unit_name in unit_names_without_stop_sales
+            ]
 
     logging.debug(events)
 
