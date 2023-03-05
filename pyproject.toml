@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dodo__stop-sales"
-version = "0.1.0"
-description = ""
+version = "1.1.0"
+description = "Services that generates events about stops and specific types of orders"
 authors = ["usbtypec1 <eldos.baktybekov@gmail.com>"]
 
 [tool.poetry.dependencies]
