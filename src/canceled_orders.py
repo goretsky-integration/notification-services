@@ -25,15 +25,17 @@ def main():
     with httpx.Client(base_url=config.api.database_api_base_url) as database_client:
         database_api = DatabaseAPI(database_client)
         units = database_api.get_units()
-        accounts = database_api.get_accounts()
     units = UnitsConverter(units)
-    shift_manager_account_names = {account.name for account in accounts if account.name.startswith('shift')}
 
     canceled_orders: list[models.CanceledOrder] = []
     with httpx.Client(base_url=config.api.auth_api_base_url) as auth_client:
         with httpx.Client(base_url=config.api.dodo_api_base_url) as dodo_api_client:
             auth_api = AuthAPI(auth_client)
             dodo_api = DodoAPI(dodo_api_client)
+
+            accounts = auth_api.get_accounts()
+            shift_manager_account_names = {account.name for account in accounts if account.name.startswith('shift')}
+
             for account_name in shift_manager_account_names:
                 try:
                     account_cookies = auth_api.get_account_cookies(account_name)
