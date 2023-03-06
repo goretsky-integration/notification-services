@@ -1,3 +1,5 @@
+from pydantic import parse_obj_as
+
 import models
 from core import exceptions
 from services.external_dodo_api.base import APIService
@@ -26,3 +28,8 @@ class AuthAPI(APIService):
         elif response.status_code == 404:
             raise exceptions.AuthCredentialsNotFoundError(account_name=account_name)
         raise exceptions.AuthAPIServiceError(account_name=account_name)
+
+    def get_accounts(self) -> tuple[models.Account, ...]:
+        response = self._client.get('/accounts/')
+        response_data = response.json()
+        return parse_obj_as(tuple[models.Account, ...], response_data)
