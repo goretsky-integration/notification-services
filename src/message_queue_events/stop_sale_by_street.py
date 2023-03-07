@@ -18,6 +18,6 @@ class StopSaleByStreetEvent(MessageQueueEvent):
             'payload': {
                 'unit_name': self.__stop_sale.unit_name,
                 'started_at': self.__stop_sale.started_at,
-                'street_name': self.__stop_sale.sector,
+                'street_name': self.__stop_sale.street,
             }
         }
