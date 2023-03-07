@@ -49,3 +49,11 @@ python src/stop_sales_by_ingredients.py
 - `--ignore-remembered` - проигнорировать стопы, сохраненные в локальном хранилище.
 - `--only-partial-ingredients` - отфильтровать стопы, которые указаны в разделе __partial_ingredient_stop_sales__ в конфигурационном файле.
 - `--include-empty-units` - создавать события по стопам даже у тех пиццерий, в которых на данных момент стопов нет.
+
+### Стопы по улицам/секторам:
+Запуск:
+```shell
+python src/stop_sales_v1.py
+```
+Обязательные аргументы:
+- `--by` - источник стоп-продаж. Варианты: `streets`, `sectors`.

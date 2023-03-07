@@ -1,18 +1,40 @@
+import functools
 import pathlib
+from argparse import ArgumentParser
 
 import httpx
 
 from core import load_config
 from filters import filter_by_predicates, predicates
-from message_queue_events import StopSaleByStreetEvent
+from message_queue_events import StopSaleByStreetEvent, StopSaleBySectorEvent
 from services import message_queue
 from services.converters import UnitsConverter
-from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
+from services.external_dodo_api import DatabaseAPI, AuthAPI, DodoAPI
 from services.period import Period
 from shortcuts.stop_sales import get_stop_sales_v1
 
 
 def main():
+    argument_parser = ArgumentParser(
+        prog='Stop Sales V1 Notifications',
+        description='Generate events for stop sales V1',
+    )
+    argument_parser.add_argument(
+        '--by',
+        choices=('streets', 'sectors'),
+        help='Choose source of stop sales',
+        required=True,
+    )
+
+    arguments = argument_parser.parse_args()
+
+    stop_sales_source_to_event_type_and_dodo_api_method = {
+        'streets': (StopSaleByStreetEvent, DodoAPI.get_stop_sales_by_streets),
+        'sectors': (StopSaleBySectorEvent, DodoAPI.get_stop_sales_by_sectors),
+    }
+
+    event_type, dodo_api_method = stop_sales_source_to_event_type_and_dodo_api_method[arguments.by]
+
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
 
@@ -27,7 +49,7 @@ def main():
             auth_api = AuthAPI(auth_client)
             dodo_api = DodoAPI(dodo_api_client)
             stop_sales = get_stop_sales_v1(
-                dodo_api_method=dodo_api.get_stop_sales_by_streets,
+                dodo_api_method=functools.partial(dodo_api_method, self=dodo_api),
                 auth_api=auth_api,
                 units=units,
                 period=stop_sales_period,
@@ -35,8 +57,10 @@ def main():
             )
 
     filtered_stop_sales = filter_by_predicates(stop_sales, predicates.is_stop_sale_v1_stopped)
-    events = [StopSaleByStreetEvent(unit_id=units.unit_name_to_id[stop_sale.unit_name], stop_sale=stop_sale)
-              for stop_sale in filtered_stop_sales]
+    events = [
+        event_type(unit_id=units.unit_name_to_id[stop_sale.unit_name], stop_sale=stop_sale)
+        for stop_sale in filtered_stop_sales
+    ]
 
     with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
