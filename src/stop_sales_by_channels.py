@@ -1,13 +1,13 @@
-import datetime
 import functools
 import logging
 import pathlib
+from argparse import ArgumentParser
 
 import httpx
 
-from argparse import ArgumentParser
+import models
 from core import load_config, setup_logging
-from filters import filter_by_predicates, predicates
+from filters import filter_by_predicates, predicates, filter_via_any_predicate
 from message_queue_events import StopSaleByChannelEvent
 from services import message_queue
 from services.converters import UnitsConverter
@@ -32,6 +32,13 @@ def main():
         '--ignore-remembered',
         action='store_true',
         help='Ignore if stop sale\'s ID in the local storage',
+    )
+    argument_parser.add_argument(
+        '--sales-channel-names',
+        action='append',
+        help='Allowed sales channel names',
+        choices=[sales_channel_name.name.lower() for sales_channel_name in models.SalesChannelName],
+        required=True,
     )
 
     arguments = argument_parser.parse_args()
@@ -81,9 +88,17 @@ def main():
         if arguments.ignore_remembered:
             used_predicates.append(functools.partial(predicates.is_object_uuid_not_in_storage, storage=storage))
 
-        logging.debug(f'Used predicates: {used_predicates}')
+        sales_channel_name_predicates = [
+            functools.partial(
+                predicates.is_stop_sales_channel_by,
+                sales_channel_name=models.SalesChannelName[allowed_sales_channel_name.upper()],
+            ) for allowed_sales_channel_name in arguments.sales_channel_names
+        ]
 
-        filtered_stop_sales = filter_by_predicates(stop_sales.result, *used_predicates)
+        filtered_stop_sales = filter_via_any_predicate(
+            filter_by_predicates(stop_sales.result, *used_predicates),
+            *sales_channel_name_predicates,
+        )
 
     events = [
         StopSaleByChannelEvent(
