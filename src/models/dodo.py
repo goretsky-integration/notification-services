@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from enum import Enum
 from typing import Generic, TypeVar
 from uuid import UUID
 
@@ -18,6 +19,8 @@ __all__ = (
     'StopSaleV1',
     'StopSaleV2',
     'StopSalesBatchResponse',
+    'SalesChannelName',
+    'ChannelStopType',
 )
 
 
@@ -49,9 +52,20 @@ class StopSaleV2(BaseModel):
     resumed_by_user_id: UUID | None
 
 
+class SalesChannelName(Enum):
+    DELIVERY = 'Delivery'
+    TAKEAWAY = 'Takeaway'
+    DINE_IN = 'Dine-in'
+
+
+class ChannelStopType(Enum):
+    COMPLETE = 'Complete'
+    REDIRECTION = 'Redirection'
+
+
 class StopSaleBySalesChannel(StopSaleV2):
-    sales_channel_name: str
-    channel_stop_type: str
+    sales_channel_name: SalesChannelName
+    channel_stop_type: ChannelStopType
 
 
 class StopSaleByIngredient(StopSaleV2):
