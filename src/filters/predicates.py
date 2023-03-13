@@ -76,7 +76,7 @@ def has_rejected_by_user_name(canceled_order: models.CanceledOrder) -> bool:
 
 
 def is_stop_sales_channel_by(
-        sales_channel_name: models.SalesChannelName,
         stop_sale: models.StopSaleBySalesChannel,
+        sales_channel_name: models.SalesChannelName,
 ) -> bool:
     return stop_sale.sales_channel_name == sales_channel_name
