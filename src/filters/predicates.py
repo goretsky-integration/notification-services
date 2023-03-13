@@ -14,6 +14,7 @@ __all__ = (
     'is_orders_count_more_than',
     'has_appointed_courier',
     'has_rejected_by_user_name',
+    'is_stop_sales_channel_by',
 )
 
 T = TypeVar('T')
@@ -72,3 +73,10 @@ def has_appointed_courier(canceled_order: models.CanceledOrder) -> bool:
 
 def has_rejected_by_user_name(canceled_order: models.CanceledOrder) -> bool:
     return canceled_order.rejected_by_user_name is not None
+
+
+def is_stop_sales_channel_by(
+        sales_channel_name: models.SalesChannelName,
+        stop_sale: models.StopSaleBySalesChannel,
+) -> bool:
+    return stop_sale.sales_channel_name == sales_channel_name
