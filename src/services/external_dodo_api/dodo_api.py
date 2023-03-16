@@ -158,3 +158,17 @@ class DodoAPI(APIService):
     ) -> tuple[models.CanceledOrder, ...]:
         response = self._client.get(f'/v1/{country_code}/canceled-orders', cookies=cookies)
         return parse_obj_as(tuple[models.CanceledOrder, ...], response.json())
+
+    def get_used_promo_codes(
+            self,
+            *,
+            unit_id: int,
+            cookies: dict,
+            country_code: str,
+            period: Period,
+    ) -> tuple[models.UnitUsedPromoCode, ...]:
+        request_query_params = {'start': period.start.isoformat(), 'end': period.end.isoformat()}
+        url = f'/v1/{country_code}/used-promo-codes/{unit_id}'
+        response = self._client.get(url, cookies=cookies, params=request_query_params)
+        response_data = response.json()
+        return parse_obj_as(tuple[models.UnitUsedPromoCode, ...], response_data)

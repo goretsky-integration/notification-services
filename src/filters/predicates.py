@@ -1,7 +1,7 @@
 from typing import Iterable, TypeVar
 
 import models
-from services.storages import PhoneNumbersStorage, ObjectUUIDStorage
+from services.storages import PhoneNumbersStorage, ObjectUUIDStorage, UsedPromoCodesStorage
 
 __all__ = (
     'is_stop_sale_v1_stopped',
@@ -15,6 +15,7 @@ __all__ = (
     'has_appointed_courier',
     'has_rejected_by_user_name',
     'is_stop_sales_channel_by',
+    'is_promo_code_not_in_storage',
 )
 
 T = TypeVar('T')
@@ -80,3 +81,14 @@ def is_stop_sales_channel_by(
         sales_channel_name: models.SalesChannelName,
 ) -> bool:
     return stop_sale.sales_channel_name == sales_channel_name
+
+
+def is_promo_code_not_in_storage(
+        used_promo_code: models.UnitUsedPromoCode,
+        storage: UsedPromoCodesStorage,
+) -> bool:
+    return not storage.is_exists(
+        unit_id=used_promo_code.unit_id,
+        promo_code=used_promo_code.promo_code,
+        order_no=used_promo_code.order_no,
+    )
