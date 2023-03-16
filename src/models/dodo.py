@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from decimal import Decimal
 from enum import Enum
 from typing import Generic, TypeVar
 from uuid import UUID
@@ -21,6 +22,7 @@ __all__ = (
     'StopSalesBatchResponse',
     'SalesChannelName',
     'ChannelStopType',
+    'UnitUsedPromoCode',
 )
 
 
@@ -116,3 +118,15 @@ StopSalesT = TypeVar('StopSalesT')
 class StopSalesBatchResponse(Generic[StopSalesT]):
     result: list[StopSalesT]
     error_unit_ids: list[int]
+
+
+class UnitUsedPromoCode(BaseModel):
+    unit_id: int
+    promo_code: str
+    event: str
+    typical_description: str
+    order_type: str
+    order_status: str
+    order_no: str
+    ordered_at: datetime.datetime
+    order_price: Decimal
