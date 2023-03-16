@@ -69,3 +69,9 @@ python src/stop_sales_v1.py
 ```
 Обязательные аргументы:
 - `--by` - источник стоп-продаж. Варианты: `streets`, `sectors`.
+
+### Использованные промо-коды:
+Запуск:
+```shell
+python src/promo_codes.py
+```
