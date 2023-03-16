@@ -25,7 +25,7 @@ def main():
 
     config = load_config(config_file_path)
 
-    period = Period(datetime.datetime(2023, 3, 15), datetime.datetime.now())
+    period = Period.today_to_this_time()
 
     with httpx.Client(base_url=config.api.database_api_base_url) as http_client:
         database_api = DatabaseAPI(http_client)
