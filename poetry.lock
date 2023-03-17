@@ -129,6 +129,21 @@ files = [
 toml = ["tomli"]
 
 [[package]]
+name = "dodo-is-api"
+version = "0.2.2"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.11,<4.0"
+files = [
+    {file = "dodo_is_api-0.2.2-py3-none-any.whl", hash = "sha256:81840d956c7096bed302a6ec25c0e8fa2076f86bdd46e9bb379dd337edccd08c"},
+    {file = "dodo_is_api-0.2.2.tar.gz", hash = "sha256:2427a05e66886b3501a65b8a65f3557d1c66dd35ee0c01957f136942b0b933ea"},
+]
+
+[package.dependencies]
+httpx = ">=0.23.3,<0.24.0"
+
+[[package]]
 name = "faker"
 version = "16.6.1"
 description = "Faker is a Python package that generates fake data for you."
@@ -455,4 +470,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c30b73c41a6e0b886bb07b7cf03ba5148b8c3d9763da8de0438e97fc463d28cc"
+content-hash = "8a1fd3e78f6d28e3978ce8dba3f65f6eb44415d08cbbddc2fba045a1a3d1d557"
