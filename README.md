@@ -75,3 +75,9 @@ python src/stop_sales_v1.py
 ```shell
 python src/promo_codes.py
 ```
+
+### Сертификаты за опоздание:
+Запуск:
+```shell
+python src/late_delivery_vouchers.py
+```
