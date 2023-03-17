@@ -45,8 +45,8 @@ def is_ingredient_name_not_blocked(
                 for disallowed_name in disallowed_ingredient_names))
 
 
-def is_object_uuid_not_in_storage(element: T, storage: ObjectUUIDStorage) -> bool:
-    return not storage.is_exist(element.uuid)
+def is_object_uuid_not_in_storage(element: T, storage: ObjectUUIDStorage, key: str = 'uuid') -> bool:
+    return not storage.is_exist(getattr(element, key))
 
 
 def has_printed_receipt(canceled_order: models.CanceledOrder) -> bool:
