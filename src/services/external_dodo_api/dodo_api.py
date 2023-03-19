@@ -103,10 +103,17 @@ class DodoAPI(APIService):
             self,
             *,
             cookies: dict,
+            period: Period,
             country_code: str,
     ) -> tuple[models.CanceledOrder, ...]:
-        response = self._client.get(f'/v1/{country_code}/canceled-orders',
-                                    cookies=cookies)
+        response = self._client.get(
+            f'/v1/{country_code}/canceled-orders',
+            cookies=cookies,
+            params={
+                'start': period.start.isoformat(),
+                'end': period.end.isoformat(),
+            }
+        )
         return parse_obj_as(tuple[models.CanceledOrder, ...], response.json())
 
     def get_used_promo_codes(
