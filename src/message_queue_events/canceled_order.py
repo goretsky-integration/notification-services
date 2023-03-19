@@ -1,26 +1,39 @@
+from collections.abc import Iterable
+
 import models
 from message_queue_events.base import MessageQueueEvent
 
-__all__ = ('CanceledOrderEvent',)
+__all__ = ('UnitCanceledOrdersEvent',)
 
 
-class CanceledOrderEvent(MessageQueueEvent):
+class UnitCanceledOrdersEvent(MessageQueueEvent):
 
-    def __init__(self, unit_id: int, canceled_order: models.CanceledOrder):
+    def __init__(
+            self,
+            *,
+            unit_id: int,
+            unit_name: str,
+            canceled_orders: Iterable[models.CanceledOrder],
+    ):
         self.__unit_id = unit_id
-        self.__canceled_order = canceled_order
+        self.__unit_name = unit_name
+        self.__canceled_orders = canceled_orders
 
     def get_data(self):
         return {
             'unit_id': self.__unit_id,
             'type': 'CANCELED_ORDERS',
             'payload': {
-                "unit_name": self.__canceled_order.unit_name,
-                "created_at": self.__canceled_order.created_at,
-                "canceled_at": self.__canceled_order.canceled_at,
-                "number": self.__canceled_order.number,
-                "type": self.__canceled_order.type,
-                "price": self.__canceled_order.price,
-                "uuid": self.__canceled_order.uuid
+                "unit_name": self.__unit_name,
+                'canceled_orders': [
+                    {
+                        'id': canceled_order.uuid,
+                        'sold_at': canceled_order.created_at,
+                        'canceled_at': canceled_order.canceled_at,
+                        'number': canceled_order.number,
+                        'sales_channel_name': canceled_order.type,
+                        'price': canceled_order.price,
+                    } for canceled_order in self.__canceled_orders
+                ]
             },
         }
