@@ -10,39 +10,6 @@ from services.period import Period
 T = TypeVar('T')
 
 
-def get_stop_sales_v2(
-        *,
-        dodo_api_method: Callable[..., Collection[T]],
-        auth_api: AuthAPI,
-        units: UnitsConverter,
-        country_code: str,
-        period: Period,
-) -> list[T]:
-    stop_sales = []
-    for account_name, grouped_units in units.grouped_by_account_name.items():
-        for _ in range(5):
-            try:
-                account_tokens = auth_api.get_account_tokens(account_name)
-            except Exception:
-                logging.exception(f'Could not get account tokens for account {account_name}')
-                continue
-            try:
-                stop_sales += dodo_api_method(
-                    country_code=country_code,
-                    unit_uuids=grouped_units.uuids,
-                    token=account_tokens.access_token,
-                    period=period,
-                )
-            except Exception:
-                logging.exception(f'Could not get stop sales for units {grouped_units.ids}. Trying again')
-            else:
-                logging.info(f'Got stop sales for units {grouped_units.ids}')
-            break
-        else:
-            logging.exception(f'Could not get stop sales for units {grouped_units.ids}')
-    return stop_sales
-
-
 def get_stop_sales_v1(
         dodo_api_method: Callable[..., Collection[T]],
         auth_api: AuthAPI,
@@ -62,12 +29,14 @@ def get_stop_sales_v1(
                     country_code=country_code,
                 )
             except Exception:
-                logging.warning(f'Could not get stop sales for units {grouped_units.ids}. Trying again')
+                logging.warning(
+                    f'Could not get stop sales for units {grouped_units.ids}. Trying again')
             else:
                 logging.info(f'Got stop sales for units {grouped_units.ids}')
                 break
         else:
-            logging.error(f'Could not get stop sales for units {grouped_units.ids}')
+            logging.error(
+                f'Could not get stop sales for units {grouped_units.ids}')
     return stop_sales
 
 
