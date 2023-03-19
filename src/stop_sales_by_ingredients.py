@@ -4,19 +4,25 @@ import pathlib
 from argparse import ArgumentParser
 
 import httpx
+from dodo_is_api.connection import DodoISAPIConnection
+from dodo_is_api.connection.http_clients import closing_http_client
+from dodo_is_api.mappers import map_stop_sale_by_ingredient_dto
+from dodo_is_api.models import StopSaleByIngredient
 
 from core import setup_logging
 from core.config import load_config_from_file
 from filters import predicates, filter_by_predicates
-from message_queue_events import StopSaleByIngredientEvent, DailyIngredientStopEvent
+from message_queue_events import (
+    StopSaleByIngredientEvent,
+    DailyIngredientStopEvent,
+)
 from services import message_queue
 from services.converters import UnitsConverter
-from services.external_dodo_api import AuthAPI, DodoAPI, DatabaseAPI
+from services.external_dodo_api import AuthAPI, DatabaseAPI
 from services.period import Period
 from services.storages import ObjectUUIDStorage
 from shortcuts.auth_service import get_account_credentials_batch
-from shortcuts.dodo_api_service import get_stop_sales_v2_batch
-from shortcuts.stop_sales import group_stop_sales_by_unit_names
+from services.mappers import group_by_unit_name
 
 
 def main():
@@ -49,13 +55,17 @@ def main():
 
     period_today = Period.today_to_this_time()
 
-    storage_file_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage',
-                                              'daily_ingredient_stops.db')
+    storage_file_path = pathlib.Path.joinpath(
+        pathlib.Path(__file__).parent.parent,
+        'local_storage',
+        'daily_ingredient_stops.db',
+    )
 
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config_from_file(config_file_path)
 
-    setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
+    setup_logging(loglevel=config.logging.level,
+                  logfile_path=config.logging.file_path)
 
     with httpx.Client(base_url=config.api.database_api_base_url) as http_client:
         database_api = DatabaseAPI(http_client)
@@ -69,18 +79,27 @@ def main():
         )
 
     for account_name in accounts_credentials.errors:
-        logging.warning(f'Could not retrieve credentials for account {account_name}')
+        logging.warning(
+            f'Could not retrieve credentials for account {account_name}')
 
-    with httpx.Client(base_url=config.api.dodo_api_base_url, timeout=30) as http_client:
-        dodo_api = DodoAPI(http_client)
-
-        stop_sales = get_stop_sales_v2_batch(
-            retrieve_stop_sales=dodo_api.get_stop_sales_by_ingredients,
-            account_tokens=accounts_credentials.result,
-            country_code=config.country_code,
-            units=units,
-            period=period_today,
-        )
+    stop_sales: list[StopSaleByIngredient] = []
+    for account_tokens in accounts_credentials.result:
+        with closing_http_client(
+                access_token=account_tokens.access_token,
+                country_code=config.country_code,
+        ) as http_client:
+            dodo_is_api_connection = DodoISAPIConnection(
+                http_client=http_client
+            )
+            raw_stop_sales = dodo_is_api_connection.get_stop_sales_by_ingredients(
+                from_date=period_today.start,
+                to_date=period_today.end,
+                units=units.grouped_by_account_name[account_tokens.account_name].uuids,
+            )
+            stop_sales += [
+                map_stop_sale_by_ingredient_dto(stop_sale)
+                for stop_sale in raw_stop_sales
+            ]
 
     with ObjectUUIDStorage(storage_file_path) as storage:
 
@@ -101,11 +120,17 @@ def main():
             )
 
         if arguments.ignore_remembered:
-            used_predicates.append(functools.partial(predicates.is_object_uuid_not_in_storage, storage=storage))
+            used_predicates.append(
+                functools.partial(
+                    predicates.is_object_uuid_not_in_storage,
+                    key='id',
+                    storage=storage,
+                )
+            )
 
         logging.debug(f'Used predicates: {used_predicates}')
 
-        filtered_stop_sales = filter_by_predicates(stop_sales.result, *used_predicates)
+        filtered_stop_sales = filter_by_predicates(stop_sales, *used_predicates)
 
     if arguments.only_partial_ingredients:
         events = [
@@ -115,14 +140,17 @@ def main():
             ) for stop_sale in filtered_stop_sales
         ]
     else:
-        stop_sales_grouped_by_unit_name = group_stop_sales_by_unit_names(filtered_stop_sales)
+        stop_sales_grouped_by_unit_name = group_by_unit_name(
+            filtered_stop_sales
+        )
 
         events = [
             DailyIngredientStopEvent(
                 unit_id=units.unit_name_to_id[unit_name],
                 unit_name=unit_name,
                 stop_sales=grouped_stop_sales,
-            ) for unit_name, grouped_stop_sales in stop_sales_grouped_by_unit_name.items()
+            ) for unit_name, grouped_stop_sales in
+            stop_sales_grouped_by_unit_name.items()
         ]
 
         if arguments.include_empty_units:
@@ -139,7 +167,9 @@ def main():
 
     logging.debug(events)
 
-    with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
+    with message_queue.get_message_queue_channel(
+            config.message_queue.rabbitmq_url
+    ) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
 
     if arguments.remember:
@@ -147,7 +177,7 @@ def main():
         with ObjectUUIDStorage(storage_file_path) as storage:
 
             for stop_sale in filtered_stop_sales:
-                storage.insert(stop_sale.uuid)
+                storage.insert(stop_sale.id)
 
 
 if __name__ == '__main__':

@@ -4,6 +4,10 @@ import pathlib
 from argparse import ArgumentParser
 
 import httpx
+from dodo_is_api.connection.http_clients import closing_http_client
+from dodo_is_api.connection import DodoISAPIConnection
+from dodo_is_api.models import StopSaleBySalesChannel
+from dodo_is_api.mappers import map_stop_sale_by_sales_channel_dto
 
 import models
 from core import load_config_from_file, setup_logging
@@ -11,11 +15,10 @@ from filters import filter_by_predicates, predicates, filter_via_any_predicate
 from message_queue_events import StopSaleByChannelEvent
 from services import message_queue
 from services.converters import UnitsConverter
-from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
+from services.external_dodo_api import DatabaseAPI, AuthAPI
 from services.period import Period
 from services.storages import ObjectUUIDStorage
 from shortcuts.auth_service import get_account_credentials_batch
-from shortcuts.dodo_api_service import get_stop_sales_v2_batch
 
 
 def main():
@@ -70,23 +73,31 @@ def main():
     for account_name in accounts_credentials.errors:
         logging.warning(f'Could not retrieve credentials for account {account_name}')
 
-    with httpx.Client(base_url=config.api.dodo_api_base_url, timeout=30) as http_client:
-        dodo_api = DodoAPI(http_client)
+    stop_sales: list[StopSaleBySalesChannel] = []
+    for account_tokens in accounts_credentials.result:
+        with closing_http_client(
+                access_token=account_tokens.access_token,
+                country_code=config.country_code,
+        ) as http_client:
+            units_related_to_account = units.grouped_by_account_name[account_tokens.account_name]
 
-        stop_sales = get_stop_sales_v2_batch(
-            retrieve_stop_sales=dodo_api.get_stop_sales_by_sales_channels,
-            account_tokens=accounts_credentials.result,
-            country_code=config.country_code,
-            units=units,
-            period=period_today,
-        )
+            dodo_is_api_connection = DodoISAPIConnection(http_client=http_client)
+
+            raw_stop_sales = dodo_is_api_connection.get_stop_sales_by_sales_channels(
+                from_date=period_today.start,
+                to_date=period_today.end,
+                units=units_related_to_account.uuids,
+            )
+            stop_sales += [map_stop_sale_by_sales_channel_dto(stop_sale) for stop_sale in raw_stop_sales]
 
     with ObjectUUIDStorage(storage_file_path) as storage:
 
         used_predicates = [predicates.is_stop_sale_v2_stopped]
 
         if arguments.ignore_remembered:
-            used_predicates.append(functools.partial(predicates.is_object_uuid_not_in_storage, storage=storage))
+            used_predicates.append(
+                functools.partial(predicates.is_object_uuid_not_in_storage, storage=storage, key='id')
+            )
 
         sales_channel_name_predicates = [
             functools.partial(
@@ -96,7 +107,7 @@ def main():
         ]
 
         filtered_stop_sales = filter_via_any_predicate(
-            filter_by_predicates(stop_sales.result, *used_predicates),
+            filter_by_predicates(stop_sales, *used_predicates),
             *sales_channel_name_predicates,
         )
 
@@ -117,7 +128,7 @@ def main():
         with ObjectUUIDStorage(storage_file_path) as storage:
 
             for stop_sale in filtered_stop_sales:
-                storage.insert(stop_sale.uuid)
+                storage.insert(stop_sale.id)
 
 
 if __name__ == '__main__':
