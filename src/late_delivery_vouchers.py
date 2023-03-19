@@ -7,7 +7,7 @@ from dodo_is_api.connection.http_clients import closing_http_client
 from dodo_is_api.mappers import map_late_delivery_voucher_dto
 from dodo_is_api.models import LateDeliveryVoucher
 
-from core import load_config
+from core import load_config_from_file
 from filters import predicates, filter_by_predicates
 from message_queue_events import LateDeliveryVouchersEvent
 from services import message_queue
@@ -23,7 +23,7 @@ def main():
     storage_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage',
                                          'late_delivery_vouchers.db')
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
-    config = load_config(config_file_path)
+    config = load_config_from_file(config_file_path)
 
     period = Period.today_to_this_time()
 

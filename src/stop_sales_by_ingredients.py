@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 import httpx
 
 from core import setup_logging
-from core.config import load_config
+from core.config import load_config_from_file
 from filters import predicates, filter_by_predicates
 from message_queue_events import StopSaleByIngredientEvent, DailyIngredientStopEvent
 from services import message_queue
@@ -53,7 +53,7 @@ def main():
                                               'daily_ingredient_stops.db')
 
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
-    config = load_config(config_file_path)
+    config = load_config_from_file(config_file_path)
 
     setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
 

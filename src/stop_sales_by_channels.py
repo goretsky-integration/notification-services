@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 import httpx
 
 import models
-from core import load_config, setup_logging
+from core import load_config_from_file, setup_logging
 from filters import filter_by_predicates, predicates, filter_via_any_predicate
 from message_queue_events import StopSaleByChannelEvent
 from services import message_queue
@@ -52,7 +52,7 @@ def main():
     )
 
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
-    config = load_config(config_file_path)
+    config = load_config_from_file(config_file_path)
 
     setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
 
