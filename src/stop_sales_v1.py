@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 
 import httpx
 
-from core import load_config
+from core import load_config_from_file
 from filters import filter_by_predicates, predicates
 from message_queue_events import StopSaleByStreetEvent, StopSaleBySectorEvent
 from services import message_queue
@@ -36,7 +36,7 @@ def main():
     event_type, dodo_api_method = stop_sales_source_to_event_type_and_dodo_api_method[arguments.by]
 
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
-    config = load_config(config_file_path)
+    config = load_config_from_file(config_file_path)
 
     stop_sales_period = Period.today_to_this_time()
 

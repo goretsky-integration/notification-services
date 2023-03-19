@@ -8,7 +8,7 @@ import httpx
 from typing_extensions import DefaultDict
 
 import models
-from core import load_config
+from core import load_config_from_file
 from message_queue_events.used_promo_code import UsedPromoCodeEvent
 from services import message_queue
 from services.converters import UnitsConverter
@@ -23,7 +23,7 @@ def main():
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     storage_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage', 'used_promo_codes.db')
 
-    config = load_config(config_file_path)
+    config = load_config_from_file(config_file_path)
 
     period = Period.today_to_this_time()
 
