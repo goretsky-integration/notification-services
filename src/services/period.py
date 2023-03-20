@@ -17,6 +17,25 @@ class Period:
     end: datetime.datetime
 
     @classmethod
+    def yesterday(cls) -> Self:
+        yesterday_this_time = get_moscow_now() - datetime.timedelta(days=1)
+        return cls(
+            start=datetime.datetime(
+                year=yesterday_this_time.year,
+                month=yesterday_this_time.month,
+                day=yesterday_this_time.day,
+            ),
+            end=datetime.datetime(
+                year=yesterday_this_time.year,
+                month=yesterday_this_time.month,
+                day=yesterday_this_time.day,
+                hour=23,
+                minute=59,
+                second=59,
+            ),
+        )
+
+    @classmethod
     def today_to_this_time(cls) -> Self:
         end = get_moscow_now()
         start = datetime.datetime(year=end.year, month=end.month, day=end.day)
