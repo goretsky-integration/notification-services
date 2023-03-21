@@ -34,7 +34,7 @@ def main():
         auth_api = AuthAPI(http_client)
         accounts_tokens = get_account_credentials_batch(
             retrieve_account_credentials=auth_api.get_account_tokens,
-            account_names=units.office_manager_account_names
+            account_names=units.dodo_is_api_account_names
         )
 
     late_delivery_vouchers: list[LateDeliveryVoucher] = []
