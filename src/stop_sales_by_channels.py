@@ -67,7 +67,7 @@ def main():
         auth_api = AuthAPI(http_client)
         accounts_credentials = get_account_credentials_batch(
             retrieve_account_credentials=auth_api.get_account_tokens,
-            account_names=units.account_names,
+            account_names=units.dodo_is_api_account_names,
         )
 
     for account_name in accounts_credentials.errors:
