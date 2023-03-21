@@ -10,7 +10,8 @@ class Unit(BaseModel):
     name: str
     uuid: UUID
     region: str
-    account_name: str
+    office_manager_account_name: str
+    dodo_is_api_account_name: str
 
 
 class Account(BaseModel):
