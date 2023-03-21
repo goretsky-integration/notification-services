@@ -30,8 +30,12 @@ class UnitsConverter:
         return {unit.uuid for unit in self.units}
 
     @functools.cached_property
-    def account_names(self) -> set[str]:
-        return {unit.account_name for unit in self.units}
+    def office_manager_account_names(self) -> set[str]:
+        return {unit.office_manager_account_name for unit in self.units}
+
+    @functools.cached_property
+    def dodo_is_api_account_names(self) -> set[str]:
+        return {unit.dodo_is_api_account_name for unit in self.units}
 
     @functools.cached_property
     def unit_id_to_name(self) -> dict[int, str]:
@@ -50,8 +54,21 @@ class UnitsConverter:
         return {unit.uuid: unit.id for unit in self.units}
 
     @functools.cached_property
-    def grouped_by_account_name(self) -> dict[str, Self]:
+    def grouped_by_office_manager_account_name(self) -> dict[str, Self]:
         account_name_to_units = collections.defaultdict(list)
         for unit in self.units:
-            account_name_to_units[unit.account_name].append(unit)
-        return {account_name: UnitsConverter(units) for account_name, units in account_name_to_units.items()}
+            account_name_to_units[unit.office_manager_account_name].append(unit)
+        return {
+            account_name: UnitsConverter(units)
+            for account_name, units in account_name_to_units.items()
+        }
+
+    @functools.cached_property
+    def grouped_by_dodo_is_api_account_name(self) -> dict[str, Self]:
+        account_name_to_units = collections.defaultdict(list)
+        for unit in self.units:
+            account_name_to_units[unit.dodo_is_api_account_name].append(unit)
+        return {
+            account_name: UnitsConverter(units)
+            for account_name, units in account_name_to_units.items()
+        }

@@ -79,7 +79,7 @@ def main():
                 access_token=account_tokens.access_token,
                 country_code=config.country_code,
         ) as http_client:
-            units_related_to_account = units.grouped_by_account_name[account_tokens.account_name]
+            units_related_to_account = units.grouped_by_dodo_is_api_account_name[account_tokens.account_name]
 
             dodo_is_api_connection = DodoISAPIConnection(http_client=http_client)
 
