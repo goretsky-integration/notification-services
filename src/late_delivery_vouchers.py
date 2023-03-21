@@ -34,7 +34,7 @@ def main():
         auth_api = AuthAPI(http_client)
         accounts_tokens = get_account_credentials_batch(
             retrieve_account_credentials=auth_api.get_account_tokens,
-            account_names=units.account_names
+            account_names=units.office_manager_account_names
         )
 
     late_delivery_vouchers: list[LateDeliveryVoucher] = []
@@ -50,7 +50,7 @@ def main():
             late_delivery_vouchers_iterator = dodo_is_api_connection.iter_late_delivery_vouchers(
                 from_date=period.start,
                 to_date=period.end,
-                units=units.grouped_by_account_name[account_tokens.account_name].uuids,
+                units=units.grouped_by_dodo_is_api_account_name[account_tokens.account_name].uuids,
             )
 
             for units_late_delivery_vouchers in late_delivery_vouchers_iterator:

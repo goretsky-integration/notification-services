@@ -67,7 +67,7 @@ def main():
         auth_api = AuthAPI(http_client)
         accounts_credentials = get_account_credentials_batch(
             retrieve_account_credentials=auth_api.get_account_tokens,
-            account_names=units.account_names,
+            account_names=units.dodo_is_api_account_names,
         )
 
     for account_name in accounts_credentials.errors:
@@ -79,7 +79,7 @@ def main():
                 access_token=account_tokens.access_token,
                 country_code=config.country_code,
         ) as http_client:
-            units_related_to_account = units.grouped_by_account_name[account_tokens.account_name]
+            units_related_to_account = units.grouped_by_dodo_is_api_account_name[account_tokens.account_name]
 
             dodo_is_api_connection = DodoISAPIConnection(http_client=http_client)
 

@@ -7,7 +7,8 @@ from message_queue_events import StocksBalanceEvent
 from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
-from shortcuts.stocks_balance import get_stocks_balance, group_stocks_balance_by_unit_id
+from shortcuts.stocks_balance import get_stocks_balance
+from services.mappers import group_by_unit_id
 
 
 def main():
@@ -26,7 +27,7 @@ def main():
             dodo_api = DodoAPI(dodo_api_client)
             stocks_balance = get_stocks_balance(dodo_api=dodo_api, auth_api=auth_api,
                                                 units=units, country_code=config.country_code)
-    running_out_stocks_grouped_by_unit_id = group_stocks_balance_by_unit_id(stocks_balance)
+    running_out_stocks_grouped_by_unit_id = group_by_unit_id(stocks_balance)
     unit_ids_without_running_out_stocks = units.ids - set(running_out_stocks_grouped_by_unit_id)
     events_with_running_out_stocks = [
         StocksBalanceEvent(

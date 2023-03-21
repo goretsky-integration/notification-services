@@ -29,7 +29,7 @@ def main():
         with httpx.Client(base_url=config.api.dodo_api_base_url, timeout=60) as dodo_api_client:
             auth_api = AuthAPI(auth_client)
             dodo_api = DodoAPI(dodo_api_client)
-            for account_name, grouped_units in units.grouped_by_account_name.items():
+            for account_name, grouped_units in units.grouped_by_office_manager_account_name.items():
                 account_cookies = auth_api.get_account_cookies(account_name)
                 cheated_orders += dodo_api.get_cheated_orders(
                     unit_ids_and_names=grouped_units.ids_and_names,

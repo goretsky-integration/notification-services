@@ -36,7 +36,7 @@ def main():
 
         accounts_cookies = get_account_credentials_batch(
             retrieve_account_credentials=auth_api.get_account_cookies,
-            account_names=units.account_names,
+            account_names=units.office_manager_account_names,
         )
 
     units_promo_codes: list[models.UnitUsedPromoCode] = []
@@ -44,7 +44,7 @@ def main():
         dodo_api = DodoAPI(http_client)
 
         for account_cookies in accounts_cookies.result:
-            for unit_id in units.grouped_by_account_name[account_cookies.account_name].ids:
+            for unit_id in units.grouped_by_office_manager_account_name[account_cookies.account_name].ids:
 
                 try:
                     units_promo_codes += dodo_api.get_used_promo_codes(
