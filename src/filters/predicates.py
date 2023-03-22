@@ -1,5 +1,7 @@
 from typing import Iterable, TypeVar
 
+from dodo_is_api.models import StopSaleBySalesChannel, SalesChannel
+
 import models
 from services.storages import PhoneNumbersStorage, ObjectUUIDStorage, UsedPromoCodesStorage
 
@@ -77,8 +79,8 @@ def has_rejected_by_user_name(canceled_order: models.CanceledOrder) -> bool:
 
 
 def is_stop_sales_channel_by(
-        stop_sale: models.StopSaleBySalesChannel,
-        sales_channel_name: models.SalesChannelName,
+        stop_sale: StopSaleBySalesChannel,
+        sales_channel_name: SalesChannel,
 ) -> bool:
     return stop_sale.sales_channel_name == sales_channel_name
 

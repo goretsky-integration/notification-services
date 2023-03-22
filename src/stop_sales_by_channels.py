@@ -6,10 +6,9 @@ from argparse import ArgumentParser
 import httpx
 from dodo_is_api.connection.http_clients import closing_http_client
 from dodo_is_api.connection import DodoISAPIConnection
-from dodo_is_api.models import StopSaleBySalesChannel
+from dodo_is_api.models import StopSaleBySalesChannel, SalesChannel
 from dodo_is_api.mappers import map_stop_sale_by_sales_channel_dto
 
-import models
 from core import load_config_from_file, setup_logging
 from filters import filter_by_predicates, predicates, filter_via_any_predicate
 from message_queue_events import StopSaleByChannelEvent
@@ -40,7 +39,7 @@ def main():
         '--sales-channel-names',
         action='append',
         help='Allowed sales channel names',
-        choices=[sales_channel_name.name.lower() for sales_channel_name in models.SalesChannelName],
+        choices=[sales_channel_name.name.lower() for sales_channel_name in SalesChannel],
         required=True,
     )
 
@@ -102,7 +101,7 @@ def main():
         sales_channel_name_predicates = [
             functools.partial(
                 predicates.is_stop_sales_channel_by,
-                sales_channel_name=models.SalesChannelName[allowed_sales_channel_name.upper()],
+                sales_channel_name=SalesChannel[allowed_sales_channel_name.upper()],
             ) for allowed_sales_channel_name in arguments.sales_channel_names
         ]
 
