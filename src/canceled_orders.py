@@ -1,3 +1,4 @@
+import functools
 import logging
 import pathlib
 
@@ -5,7 +6,7 @@ import httpx
 
 import models
 from core import load_config_from_file, setup_logging
-from filters import predicates, filter_via_any_predicate
+from filters import predicates, filter_by_predicates
 from message_queue_events import UnitCanceledOrdersEvent
 from services import message_queue
 from services.converters import UnitsConverter
@@ -55,14 +56,30 @@ def main():
                     logging.exception(
                         f'Could not get canceled orders for account {account_name}')
 
-        filtered_canceled_orders = filter_via_any_predicate(
+        filtered_restaurant_orders = filter_by_predicates(
             canceled_orders,
-            predicates.has_appointed_courier,
+            functools.partial(
+                predicates.is_canceled_order_sales_channel,
+                sales_channel_name='Ресторан',
+            ),
             predicates.has_rejected_by_user_name,
         )
 
-    unit_name_to_canceled_orders = group_by_unit_name(filtered_canceled_orders)
+        filtered_delivery_orders = filter_by_predicates(
+            canceled_orders,
+            functools.partial(
+                predicates.is_canceled_order_sales_channel,
+                sales_channel_name='Доставка',
+            ),
+            predicates.has_printed_receipt,
+            predicates.has_appointed_courier,
+        )
 
+        filtered_canceled_orders = (
+                filtered_restaurant_orders + filtered_delivery_orders
+        )
+
+    unit_name_to_canceled_orders = group_by_unit_name(filtered_canceled_orders)
     events = [
         UnitCanceledOrdersEvent(
             unit_id=units.unit_name_to_id[unit_name],

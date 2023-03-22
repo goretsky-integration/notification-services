@@ -92,3 +92,10 @@ def is_promo_code_not_in_storage(
         promo_code=used_promo_code.promo_code,
         order_no=used_promo_code.order_no,
     )
+
+
+def is_canceled_order_sales_channel(
+        order: models.CanceledOrder,
+        sales_channel_name: str,
+) -> bool:
+    return order.type == sales_channel_name
