@@ -1,18 +1,40 @@
-import functools
 import logging
 import pathlib
+from collections.abc import Iterable
 
 import httpx
 
 import models
 from core import load_config_from_file, setup_logging
-from filters import predicates, filter_by_predicates
+from filters.specifications import (
+    CanceledOrderHasAppointedCourierSpecification,
+    CanceledOrderRejectedByUserNameSpecification,
+    CanceledOrderBySalesChannelSpecification,
+    filter_by_specification,
+)
 from message_queue_events import UnitCanceledOrdersEvent
 from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import DatabaseAPI, DodoAPI, AuthAPI
 from services.mappers import group_by_unit_name
 from services.period import Period
+
+
+def filter_canceled_orders(canceled_orders: Iterable[models.CanceledOrder]):
+    restaurant_specification = (
+            CanceledOrderBySalesChannelSpecification('Ресторан')
+            & CanceledOrderRejectedByUserNameSpecification()
+    )
+    delivery_specification = (
+            CanceledOrderBySalesChannelSpecification('Доставка')
+            & CanceledOrderHasAppointedCourierSpecification()
+    )
+    specification = restaurant_specification | delivery_specification
+
+    return filter_by_specification(
+        specification=specification,
+        items=canceled_orders,
+    )
 
 
 def main():
@@ -56,29 +78,7 @@ def main():
                     logging.exception(
                         f'Could not get canceled orders for account {account_name}')
 
-        filtered_restaurant_orders = filter_by_predicates(
-            canceled_orders,
-            functools.partial(
-                predicates.is_canceled_order_sales_channel,
-                sales_channel_name='Ресторан',
-            ),
-            predicates.has_rejected_by_user_name,
-        )
-
-        filtered_delivery_orders = filter_by_predicates(
-            canceled_orders,
-            functools.partial(
-                predicates.is_canceled_order_sales_channel,
-                sales_channel_name='Доставка',
-            ),
-            predicates.has_printed_receipt,
-            predicates.has_appointed_courier,
-        )
-
-        filtered_canceled_orders = (
-                filtered_restaurant_orders + filtered_delivery_orders
-        )
-
+    filtered_canceled_orders = filter_canceled_orders(canceled_orders)
     unit_name_to_canceled_orders = group_by_unit_name(filtered_canceled_orders)
     events = [
         UnitCanceledOrdersEvent(
