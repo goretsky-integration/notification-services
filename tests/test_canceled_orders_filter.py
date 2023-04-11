@@ -1,6 +1,3 @@
-import datetime
-from uuid import UUID
-
 import pytest
 from faker import Faker
 
