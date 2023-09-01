@@ -29,7 +29,7 @@ def send_json_message(channel: BlockingChannel, event: MessageQueueEvent):
     channel.basic_publish(
         exchange='',
         routing_key='telegram-notifications',
-        body=json.dumps(body, default=str).encode('utf-8'),
+        body=json.dumps(body, default=str, ensure_ascii=False).encode('utf-8'),
     )
 
 
