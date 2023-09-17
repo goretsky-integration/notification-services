@@ -9,7 +9,6 @@ from services.storages import (
 )
 
 __all__ = (
-    'is_stop_sale_v1_stopped',
     'is_stop_sale_v2_stopped',
     'is_ingredient_name_allowed',
     'is_ingredient_name_not_blocked',
@@ -21,10 +20,6 @@ __all__ = (
 )
 
 T = TypeVar('T')
-
-
-def is_stop_sale_v1_stopped(stop_sale: models.StopSaleV1) -> bool:
-    return stop_sale.staff_name_who_resumed is None
 
 
 def is_stop_sale_v2_stopped(stop_sale: models.StopSaleV2) -> bool:

@@ -8,8 +8,6 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 __all__ = (
-    'StopSaleBySector',
-    'StopSaleByStreet',
     'StopSaleByIngredient',
     'StopSaleBySalesChannel',
     'CommonPhoneNumberOrders',
@@ -17,30 +15,12 @@ __all__ = (
     'CanceledOrder',
     'UnitStocksBalance',
     'StocksBalanceReport',
-    'StopSaleV1',
     'StopSaleV2',
     'StopSalesBatchResponse',
     'SalesChannelName',
     'ChannelStopType',
     'UnitUsedPromoCode',
 )
-
-
-class StopSaleV1(BaseModel):
-    unit_name: str
-    started_at: datetime.datetime
-    ended_at: datetime.datetime | None
-    staff_name_who_stopped: str
-    staff_name_who_resumed: str | None
-    sector: str
-
-
-class StopSaleBySector(StopSaleV1):
-    pass
-
-
-class StopSaleByStreet(StopSaleV1):
-    street: str
 
 
 class StopSaleV2(BaseModel):
