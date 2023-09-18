@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 from dodo_is_api.models import LateDeliveryVoucher
 
@@ -9,7 +9,12 @@ __all__ = ('LateDeliveryVouchersEvent',)
 
 class LateDeliveryVouchersEvent(MessageQueueEvent):
 
-    def __init__(self, unit_id: int, unit_name: str, late_delivery_vouchers: Iterable[LateDeliveryVoucher]):
+    def __init__(
+            self,
+            unit_id: int,
+            unit_name: str,
+            late_delivery_vouchers: Iterable[LateDeliveryVoucher],
+    ):
         self.__unit_id = unit_id
         self.__unit_name = unit_name
         self.__late_delivery_vouchers = late_delivery_vouchers

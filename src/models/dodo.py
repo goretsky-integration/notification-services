@@ -1,57 +1,20 @@
 import datetime
 from dataclasses import dataclass
 from decimal import Decimal
-from enum import Enum
 from typing import Generic, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 __all__ = (
-    'StopSaleByIngredient',
-    'StopSaleBySalesChannel',
     'CommonPhoneNumberOrders',
     'CheatedPhoneNumberOrder',
     'CanceledOrder',
     'UnitStocksBalance',
     'StocksBalanceReport',
-    'StopSaleV2',
     'StopSalesBatchResponse',
-    'SalesChannelName',
-    'ChannelStopType',
     'UnitUsedPromoCode',
 )
-
-
-class StopSaleV2(BaseModel):
-    uuid: UUID = Field(alias='id')
-    unit_uuid: UUID
-    unit_name: str
-    reason: str
-    started_at: datetime.datetime
-    ended_at: datetime.datetime | None
-    stopped_by_user_id: UUID
-    resumed_by_user_id: UUID | None
-
-
-class SalesChannelName(Enum):
-    DELIVERY = 'Delivery'
-    TAKEAWAY = 'Takeaway'
-    DINE_IN = 'Dine-in'
-
-
-class ChannelStopType(Enum):
-    COMPLETE = 'Complete'
-    REDIRECTION = 'Redirection'
-
-
-class StopSaleBySalesChannel(StopSaleV2):
-    sales_channel_name: SalesChannelName
-    channel_stop_type: ChannelStopType
-
-
-class StopSaleByIngredient(StopSaleV2):
-    ingredient_name: str
 
 
 class CheatedPhoneNumberOrder(BaseModel):

@@ -5,9 +5,7 @@ from argparse import ArgumentParser
 
 import httpx
 from dodo_is_api.connection import DodoISAPIConnection
-from dodo_is_api.connection.http_clients import closing_http_client
-from dodo_is_api.mappers import map_stop_sale_by_ingredient_dto
-from dodo_is_api.models import StopSaleByIngredient
+from dodo_is_api.models import StopSaleByIngredient, CountryCode
 
 from core import setup_logging
 from core.config import load_config_from_file
@@ -19,10 +17,10 @@ from message_queue_events import (
 from services import message_queue
 from services.converters import UnitsConverter
 from services.external_dodo_api import AuthAPI, DatabaseAPI
+from services.mappers import group_by_unit_name
 from services.period import Period
 from services.storages import ObjectUUIDStorage
 from shortcuts.auth_service import get_account_credentials_batch
-from services.mappers import group_by_unit_name
 
 
 def main():
@@ -84,22 +82,18 @@ def main():
 
     stop_sales: list[StopSaleByIngredient] = []
     for account_tokens in accounts_credentials.result:
-        with closing_http_client(
-                access_token=account_tokens.access_token,
-                country_code=config.country_code,
-        ) as http_client:
+        with httpx.Client(timeout=120) as http_client:
             dodo_is_api_connection = DodoISAPIConnection(
-                http_client=http_client
+                http_client=http_client,
+                country_code=CountryCode(config.country_code),
+                access_token=account_tokens.access_token,
             )
-            raw_stop_sales = dodo_is_api_connection.get_stop_sales_by_ingredients(
+            stop_sales += dodo_is_api_connection.get_stop_sales_by_ingredients(
                 from_date=period_today.start,
                 to_date=period_today.end,
-                units=units.grouped_by_dodo_is_api_account_name[account_tokens.account_name].uuids,
+                units=units.grouped_by_dodo_is_api_account_name[
+                    account_tokens.account_name].uuids,
             )
-            stop_sales += [
-                map_stop_sale_by_ingredient_dto(stop_sale)
-                for stop_sale in raw_stop_sales
-            ]
 
     with ObjectUUIDStorage(storage_file_path) as storage:
 
