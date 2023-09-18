@@ -4,10 +4,8 @@ import pathlib
 from argparse import ArgumentParser
 
 import httpx
-from dodo_is_api.connection.http_clients import closing_http_client
 from dodo_is_api.connection import DodoISAPIConnection
-from dodo_is_api.models import StopSaleBySalesChannel, SalesChannel
-from dodo_is_api.mappers import map_stop_sale_by_sales_channel_dto
+from dodo_is_api.models import StopSaleBySalesChannel, SalesChannel, CountryCode
 
 from core import load_config_from_file, setup_logging
 from filters import filter_by_predicates, predicates, filter_via_any_predicate
@@ -39,7 +37,8 @@ def main():
         '--sales-channel-names',
         action='append',
         help='Allowed sales channel names',
-        choices=[sales_channel_name.name.lower() for sales_channel_name in SalesChannel],
+        choices=[sales_channel_name.name.lower() for sales_channel_name in
+                 SalesChannel],
         required=True,
     )
 
@@ -56,7 +55,8 @@ def main():
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config_from_file(config_file_path)
 
-    setup_logging(loglevel=config.logging.level, logfile_path=config.logging.file_path)
+    setup_logging(loglevel=config.logging.level,
+                  logfile_path=config.logging.file_path)
 
     with httpx.Client(base_url=config.api.database_api_base_url) as http_client:
         database_api = DatabaseAPI(http_client)
@@ -70,24 +70,27 @@ def main():
         )
 
     for account_name in accounts_credentials.errors:
-        logging.warning(f'Could not retrieve credentials for account {account_name}')
+        logging.warning(
+            f'Could not retrieve credentials for account {account_name}')
 
     stop_sales: list[StopSaleBySalesChannel] = []
     for account_tokens in accounts_credentials.result:
-        with closing_http_client(
+        with httpx.Client(timeout=120) as http_client:
+            units_related_to_account = \
+            units.grouped_by_dodo_is_api_account_name[
+                account_tokens.account_name]
+
+            dodo_is_api_connection = DodoISAPIConnection(
+                http_client=http_client,
                 access_token=account_tokens.access_token,
-                country_code=config.country_code,
-        ) as http_client:
-            units_related_to_account = units.grouped_by_dodo_is_api_account_name[account_tokens.account_name]
+                country_code=CountryCode(config.country_code),
+            )
 
-            dodo_is_api_connection = DodoISAPIConnection(http_client=http_client)
-
-            raw_stop_sales = dodo_is_api_connection.get_stop_sales_by_sales_channels(
+            stop_sales += dodo_is_api_connection.get_stop_sales_by_sales_channels(
                 from_date=period_today.start,
                 to_date=period_today.end,
                 units=units_related_to_account.uuids,
             )
-            stop_sales += [map_stop_sale_by_sales_channel_dto(stop_sale) for stop_sale in raw_stop_sales]
 
     with ObjectUUIDStorage(storage_file_path) as storage:
 
@@ -95,13 +98,15 @@ def main():
 
         if arguments.ignore_remembered:
             used_predicates.append(
-                functools.partial(predicates.is_object_uuid_not_in_storage, storage=storage, key='id')
+                functools.partial(predicates.is_object_uuid_not_in_storage,
+                                  storage=storage, key='id')
             )
 
         sales_channel_name_predicates = [
             functools.partial(
                 predicates.is_stop_sales_channel_by,
-                sales_channel_name=SalesChannel[allowed_sales_channel_name.upper()],
+                sales_channel_name=SalesChannel[
+                    allowed_sales_channel_name.upper()],
             ) for allowed_sales_channel_name in arguments.sales_channel_names
         ]
 
@@ -119,7 +124,8 @@ def main():
 
     logging.debug(events)
 
-    with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
+    with message_queue.get_message_queue_channel(
+            config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
 
     if arguments.remember:

@@ -1,14 +1,14 @@
 import pytest
+from dodo_is_api.models import StopSaleByIngredient
 from faker import Faker
 
-import models
 from filters import predicates
 
 faker = Faker()
 
 
-def fake_stop_sale_by_ingredient(ingredient_name: str) -> models.StopSaleByIngredient:
-    return models.StopSaleByIngredient(
+def fake_stop_sale_by_ingredient(ingredient_name: str) -> StopSaleByIngredient:
+    return StopSaleByIngredient(
         id=faker.uuid4(cast_to=None),
         unit_uuid=faker.uuid4(cast_to=None),
         unit_name=faker.name(),
@@ -29,18 +29,21 @@ def fake_stop_sale_by_ingredient(ingredient_name: str) -> models.StopSaleByIngre
     ]
 )
 def test_ingredient_name_allowed(stop_sale, allowed_names):
-    assert predicates.is_ingredient_name_allowed(stop_sale, allowed_names) == True
+    assert predicates.is_ingredient_name_allowed(stop_sale,
+                                                 allowed_names) == True
 
 
 @pytest.mark.parametrize(
     'stop_sale, allowed_names',
     [
         (fake_stop_sale_by_ingredient('тесто 35'), {'банан', '45'}),
-        (fake_stop_sale_by_ingredient('маффин шоколадный'), {'молочный', 'фруктовый'})
+        (fake_stop_sale_by_ingredient('маффин шоколадный'),
+         {'молочный', 'фруктовый'})
     ]
 )
 def test_ingredient_name_not_allowed(stop_sale, allowed_names):
-    assert predicates.is_ingredient_name_allowed(stop_sale, allowed_names) == False
+    assert predicates.is_ingredient_name_allowed(stop_sale,
+                                                 allowed_names) == False
 
 
 @pytest.mark.parametrize(
@@ -53,7 +56,8 @@ def test_ingredient_name_not_allowed(stop_sale, allowed_names):
     ]
 )
 def test_ingredient_name_blocked(stop_sale, blocked_names):
-    assert predicates.is_ingredient_name_not_blocked(stop_sale, blocked_names) == False
+    assert predicates.is_ingredient_name_not_blocked(stop_sale,
+                                                     blocked_names) == False
 
 
 @pytest.mark.parametrize(
@@ -66,4 +70,5 @@ def test_ingredient_name_blocked(stop_sale, blocked_names):
     ]
 )
 def test_ingredient_name_not_blocked(stop_sale, blocked_names):
-    assert predicates.is_ingredient_name_not_blocked(stop_sale, blocked_names) == True
+    assert predicates.is_ingredient_name_not_blocked(stop_sale,
+                                                     blocked_names) == True

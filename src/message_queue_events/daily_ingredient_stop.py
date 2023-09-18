@@ -1,6 +1,7 @@
-from typing import Iterable
+from collections.abc import Iterable
 
-import models
+from dodo_is_api.models import StopSaleByIngredient
+
 from message_queue_events.base import MessageQueueEvent
 
 __all__ = ('DailyIngredientStopEvent',)
@@ -8,7 +9,12 @@ __all__ = ('DailyIngredientStopEvent',)
 
 class DailyIngredientStopEvent(MessageQueueEvent):
 
-    def __init__(self, unit_id: int, unit_name: str, stop_sales: Iterable[models.StopSaleByIngredient]):
+    def __init__(
+            self,
+            unit_id: int,
+            unit_name: str,
+            stop_sales: Iterable[StopSaleByIngredient],
+    ):
         self.__unit_id = unit_id
         self.__unit_name = unit_name
         self.__stop_sales = stop_sales

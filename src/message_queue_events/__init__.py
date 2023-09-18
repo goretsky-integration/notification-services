@@ -7,5 +7,4 @@ from .stocks_balance import *
 from .stop_sale_by_channel import *
 from .stop_sale_by_ingredient import *
 from .stop_sale_by_sector import *
-from .stop_sale_by_street import *
 from .used_promo_code import *

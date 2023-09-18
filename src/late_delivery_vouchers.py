@@ -3,9 +3,7 @@ import pathlib
 
 import httpx
 from dodo_is_api.connection import DodoISAPIConnection
-from dodo_is_api.connection.http_clients import closing_http_client
-from dodo_is_api.mappers import map_late_delivery_voucher_dto
-from dodo_is_api.models import LateDeliveryVoucher
+from dodo_is_api.models import LateDeliveryVoucher, CountryCode
 
 from core import load_config_from_file
 from filters import predicates, filter_by_predicates
@@ -20,8 +18,11 @@ from shortcuts.auth_service import get_account_credentials_batch
 
 
 def main():
-    storage_path = pathlib.Path.joinpath(pathlib.Path(__file__).parent.parent, 'local_storage',
-                                         'late_delivery_vouchers.db')
+    storage_path = pathlib.Path.joinpath(
+        pathlib.Path(__file__).parent.parent,
+        'local_storage',
+        'late_delivery_vouchers.db',
+    )
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config_from_file(config_file_path)
 
@@ -40,43 +41,44 @@ def main():
     late_delivery_vouchers: list[LateDeliveryVoucher] = []
     for account_tokens in accounts_tokens.result:
 
-        with closing_http_client(
+        with httpx.Client(timeout=120) as http_client:
+
+            dodo_is_api_connection = DodoISAPIConnection(
+                http_client=http_client,
                 access_token=account_tokens.access_token,
-                country_code=config.country_code,
-        ) as http_client:
-
-            dodo_is_api_connection = DodoISAPIConnection(http_client=http_client)
-
-            late_delivery_vouchers_iterator = dodo_is_api_connection.iter_late_delivery_vouchers(
-                from_date=period.start,
-                to_date=period.end,
-                units=units.grouped_by_dodo_is_api_account_name[account_tokens.account_name].uuids,
+                country_code=CountryCode(config.country_code),
             )
 
-            for units_late_delivery_vouchers in late_delivery_vouchers_iterator:
-                late_delivery_vouchers += [
-                    map_late_delivery_voucher_dto(late_delivery_voucher)
-                    for late_delivery_voucher in units_late_delivery_vouchers
-                ]
+            late_delivery_vouchers += dodo_is_api_connection.get_late_delivery_vouchers(
+                from_date=period.start,
+                to_date=period.end,
+                units=units.grouped_by_dodo_is_api_account_name[
+                    account_tokens.account_name].uuids,
+            )
 
     with ObjectUUIDStorage(storage_path) as storage:
         used_predicates = [
-            functools.partial(predicates.is_object_uuid_not_in_storage, storage=storage, key='order_id'),
+            functools.partial(predicates.is_object_uuid_not_in_storage,
+                              storage=storage, key='order_id'),
         ]
 
-        filtered_late_delivery_vouchers = filter_by_predicates(late_delivery_vouchers, *used_predicates)
+        filtered_late_delivery_vouchers = filter_by_predicates(
+            late_delivery_vouchers, *used_predicates)
 
-    late_delivery_vouchers_grouped_by_unit_uuid = group_by_unit_uuid(filtered_late_delivery_vouchers)
+    late_delivery_vouchers_grouped_by_unit_uuid = group_by_unit_uuid(
+        filtered_late_delivery_vouchers)
 
     events = [
         LateDeliveryVouchersEvent(
             unit_id=units.unit_uuid_to_id[unit_uuid],
             unit_name=units.unit_uuid_to_name[unit_uuid],
             late_delivery_vouchers=late_delivery_vouchers,
-        ) for unit_uuid, late_delivery_vouchers in late_delivery_vouchers_grouped_by_unit_uuid.items()
+        ) for unit_uuid, late_delivery_vouchers in
+        late_delivery_vouchers_grouped_by_unit_uuid.items()
     ]
 
-    with message_queue.get_message_queue_channel(config.message_queue.rabbitmq_url) as message_queue_channel:
+    with message_queue.get_message_queue_channel(
+            config.message_queue.rabbitmq_url) as message_queue_channel:
         message_queue.send_events(message_queue_channel, events)
 
     with ObjectUUIDStorage(storage_path) as storage:

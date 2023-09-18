@@ -10,60 +10,6 @@ __all__ = ('DodoAPI',)
 
 
 class DodoAPI(APIService):
-    def __get_stop_sales_v1(
-            self,
-            *,
-            resource: str,
-            country_code: str,
-            unit_ids: Iterable[int],
-            cookies: dict,
-            period: Period,
-    ) -> list[dict]:
-        request_query_params = {
-            'unit_ids': tuple(unit_ids),
-            'start': period.start.strftime('%Y-%m-%dT%H:%M:%S'),
-            'end': period.end.strftime('%Y-%m-%dT%H:%M:%S'),
-        }
-        url = f'/v1/{country_code}/stop-sales/{resource}'
-        response = self._client.get(url, cookies=cookies,
-                                    params=request_query_params)
-        return response.json()
-
-    def get_stop_sales_by_sectors(
-            self,
-            *,
-            unit_ids: Iterable[int],
-            cookies: dict,
-            country_code: str,
-            period: Period,
-    ) -> tuple[models.StopSaleBySector, ...]:
-        resource = 'sectors'
-        response_data = self.__get_stop_sales_v1(
-            resource=resource,
-            unit_ids=unit_ids,
-            cookies=cookies,
-            period=period,
-            country_code=country_code,
-        )
-        return parse_obj_as(tuple[models.StopSaleBySector, ...], response_data)
-
-    def get_stop_sales_by_streets(
-            self,
-            *,
-            unit_ids: Iterable[int],
-            cookies: dict,
-            country_code: str,
-            period: Period,
-    ) -> tuple[models.StopSaleByStreet, ...]:
-        resource = 'streets'
-        response_data = self.__get_stop_sales_v1(
-            resource=resource,
-            unit_ids=unit_ids,
-            cookies=cookies,
-            period=period,
-            country_code=country_code,
-        )
-        return parse_obj_as(tuple[models.StopSaleByStreet, ...], response_data)
 
     def get_stocks_balance(
             self,

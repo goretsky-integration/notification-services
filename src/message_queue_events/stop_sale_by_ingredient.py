@@ -1,4 +1,5 @@
-import models
+from dodo_is_api.models import StopSaleByIngredient
+
 from message_queue_events.base import MessageQueueEvent
 
 __all__ = ('StopSaleByIngredientEvent',)
@@ -6,7 +7,7 @@ __all__ = ('StopSaleByIngredientEvent',)
 
 class StopSaleByIngredientEvent(MessageQueueEvent):
 
-    def __init__(self, unit_id: int, stop_sale: models.StopSaleByIngredient):
+    def __init__(self, unit_id: int, stop_sale: StopSaleByIngredient):
         self.__unit_id = unit_id
         self.__stop_sale = stop_sale
 
