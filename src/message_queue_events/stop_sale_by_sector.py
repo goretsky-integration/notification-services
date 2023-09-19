@@ -20,5 +20,6 @@ class StopSaleBySectorEvent(MessageQueueEvent):
                 'unit_name': self.__stop_sale.unit_name,
                 'started_at': self.__stop_sale.started_at,
                 'sector_name': self.__stop_sale.sector_name,
+                'is_sub_sector': self.__stop_sale.is_sub_sector,
             }
         }
